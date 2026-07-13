@@ -49,7 +49,7 @@ body{font-family:var(--sans);font-weight:300;color:var(--ink);min-height:100vh;-
 .price-wrap .cur{position:absolute;left:15px;bottom:14px;font-family:var(--serif);font-size:19px;color:var(--stone);pointer-events:none}
 .price-wrap .tin{padding-left:30px}
 
-.appraise{width:100%;margin-top:18px;cursor:pointer;background:var(--ink);color:var(--bg);border:none;border-radius:2px;padding:15px;font-family:var(--sans);font-weight:500;font-size:11px;letter-spacing:.28em;text-transform:uppercase;transition:background .2s,opacity .2s}
+.appraise{width:100%;margin-top:18px;cursor:pointer;background:var(--ink);color:var(--bg);border:none;border-radius:2px;padding:15px;font-family:var(--sans);font-weight:500;font-size:11px;letter-spacing:.28em;text-transform:uppercase;transition:background .2s}
 .appraise:hover{background:#000}
 
 .subnote{text-align:center;margin-top:14px;font-family:var(--serif);font-style:italic;font-size:14.5px;color:var(--stone);line-height:1.5}
@@ -80,9 +80,12 @@ body{font-family:var(--sans);font-weight:300;color:var(--ink);min-height:100vh;-
 .btn-ghost{background:transparent;color:var(--stone);border:1px solid var(--hair)}
 .btn-ghost:hover{border-color:var(--stone);color:var(--ink2)}
 
-.check{width:56px;height:56px;border-radius:50%;border:1.5px solid var(--sage);color:var(--sage);display:flex;align-items:center;justify-content:center;font-size:27px;margin:2px auto 16px}
-.scanned-num{font-family:var(--serif);font-weight:500;font-size:30px;letter-spacing:.06em;color:var(--ink);margin:4px 0;word-break:break-all}
-.scanned-note{font-family:var(--sans);font-weight:300;font-size:13.5px;line-height:1.6;color:var(--stone);margin-top:12px}
+.prod-img{max-width:150px;max-height:150px;width:auto;margin:0 auto 18px;display:block;background:#fff;border:1px solid var(--hair);border-radius:2px;padding:10px;object-fit:contain}
+.found-note{font-family:var(--sans);font-weight:400;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--sage);margin-bottom:4px}
+.appraisal-next{font-family:var(--sans);font-weight:300;font-size:13.5px;line-height:1.6;color:var(--stone);margin-top:6px}
+.barcode-num{font-family:var(--serif);font-size:17px;letter-spacing:.06em;color:var(--stone);word-break:break-all}
+.barcode-num small{display:block;font-family:var(--sans);font-weight:400;font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:var(--stone2);margin-bottom:5px}
+.qmark{width:56px;height:56px;border-radius:50%;border:1.5px solid var(--bronze);color:var(--bronze);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:30px;margin:2px auto 16px}
 
 .loading{margin-top:60px;text-align:center}
 .loading .l1{font-family:var(--serif);font-style:italic;font-size:22px;color:var(--ink2)}
@@ -96,8 +99,8 @@ body{font-family:var(--sans);font-weight:300;color:var(--ink);min-height:100vh;-
 .card-head .k{font-family:var(--sans);font-weight:400;font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--stone)}
 .hair{border:none;border-top:1px solid var(--hair);margin:20px 0}
 .hair.tight{margin:15px 0}
-.pname{font-family:var(--serif);font-weight:600;font-size:30px;line-height:1.12;margin:2px 0 6px;color:var(--ink)}
-.pcat{font-family:var(--sans);font-weight:400;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--stone)}
+.pname{font-family:var(--serif);font-weight:600;font-size:28px;line-height:1.14;margin:2px 0 6px;color:var(--ink)}
+.pcat{font-family:var(--sans);font-weight:400;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--stone)}
 .verdict-block{display:flex;justify-content:space-between;align-items:flex-end;gap:16px}
 .verdict-block .vlabel{font-family:var(--sans);font-weight:400;font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--stone);margin-bottom:6px}
 .verdict-block .vword{font-family:var(--serif);font-weight:600;font-size:34px;line-height:.95}
@@ -135,7 +138,7 @@ body{font-family:var(--sans);font-weight:300;color:var(--ink);min-height:100vh;-
 
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
-/* ---- Veya — Phase 2 (front end + 5 examples + real barcode camera) ---- */
+/* ---- Veya — Phase 3 (camera + Open Food Facts product lookup) ---- */
 
 var DB = [
   { keys:["nurofen","ibuprofen"], product:"Nurofen", category:"Painkiller \u00b7 Ibuprofen",
@@ -235,9 +238,8 @@ function startScanner(){
   try{ html5Qrcode=new Html5Qrcode("reader",{verbose:false}); }
   catch(e){ camMessage("Couldn\u2019t start the camera. Tap Try again.",true); return; }
   html5Qrcode.start(
-    { facingMode:"environment" },
-    { fps:10 },
-    function(decodedText){ if(scanHandled)return; scanHandled=true; stopScanner(function(){ renderScanned(decodedText); }); },
+    { facingMode:"environment" }, { fps:10 },
+    function(decodedText){ if(scanHandled)return; scanHandled=true; stopScanner(function(){ lookupBarcode(decodedText); }); },
     function(){ /* per-frame no-match: ignore */ }
   ).catch(function(){
     camMessage("Veya needs camera access. Allow the camera when your browser asks, then tap Try again.",true);
@@ -246,8 +248,7 @@ function startScanner(){
 function camMessage(msg,showRetry){
   app.innerHTML=mastHTML+
     '<div class="viewer"><div class="cam-msg"><p>'+esc(msg)+'</p></div>'+frameHTML+'</div>'+
-    '<div class="scan-actions">'+
-    (showRetry?'<button class="btn-primary" onclick="renderScan()">Try again</button>':'')+
+    '<div class="scan-actions">'+(showRetry?'<button class="btn-primary" onclick="renderScan()">Try again</button>':'')+
     '<button class="btn-ghost" onclick="go(\'home\')">Cancel</button></div>';
 }
 function stopScanner(cb){
@@ -257,15 +258,60 @@ function stopScanner(cb){
   } else { if(cb)cb(); }
 }
 function cancelScan(){ stopScanner(function(){ go("home"); }); }
-function renderScanned(number){
-  app.innerHTML=mastHTML+
-    '<div class="card" style="text-align:center">'+
-    '<div class="check">\u2713</div>'+
-    '<div class="lbl">Scanned</div>'+
-    '<div class="scanned-num">'+esc(number)+'</div>'+
-    '<div class="scanned-note">Barcode read successfully. In the next step, Veya turns this number into the real product and its appraisal.</div>'+
+
+/* ---- Open Food Facts lookup ---- */
+function lookupBarcode(number){
+  app.innerHTML=mastHTML+'<div class="loading"><div class="l1">Looking up product\u2026</div><div class="l2">Barcode '+esc(number)+'</div><div class="dots"></div></div>';
+  window.scrollTo(0,0);
+  fetch("https://world.openfoodfacts.org/api/v0/product/"+encodeURIComponent(number)+".json")
+    .then(function(res){ return res.json(); })
+    .then(function(data){
+      if(data && data.status===1 && data.product){ renderProduct(number,data.product); }
+      else { renderNotFound(number); }
+    })
+    .catch(function(){ renderLookupError(number); });
+}
+function renderProduct(number,p){
+  var name=p.product_name||p.product_name_en||p.generic_name_en||p.generic_name||"Unnamed product";
+  var brand=(p.brands||"").split(",")[0].trim();
+  var size=(p.quantity||"").trim();
+  var img=p.image_front_url||p.image_url||p.image_front_small_url||"";
+  var sub=[]; if(brand)sub.push(brand); if(size)sub.push(size);
+  var html=mastHTML+'<div class="card" style="text-align:center">';
+  if(img) html+='<img class="prod-img" src="'+esc(img)+'" alt="" onerror="this.style.display=\'none\'" />';
+  html+='<div class="found-note">\u2713 Found in the grocery database</div>'+
+    '<div class="pname">'+esc(name)+'</div>'+
+    (sub.length?'<div class="pcat">'+esc(sub.join("  \u00b7  "))+'</div>':'')+
+    '<hr class="hair" />'+
+    '<div class="lbl">Worth-it appraisal</div>'+
+    '<div class="appraisal-next">Arrives in the next build step, when the value engine is connected.</div>'+
+    '<hr class="hair" />'+
+    '<div class="barcode-num"><small>Barcode</small>'+esc(number)+'</div>'+
     '</div>'+
     '<div class="scan-actions"><button class="btn-primary" onclick="renderScan()">Scan again</button>'+
+    '<button class="btn-ghost" onclick="go(\'home\')">Home</button></div>';
+  app.innerHTML=html; window.scrollTo(0,0);
+}
+function renderNotFound(number){
+  app.innerHTML=mastHTML+
+    '<div class="card" style="text-align:center">'+
+    '<div class="qmark">?</div>'+
+    '<div class="lbl">Not in the database</div>'+
+    '<div class="barcode-num" style="font-size:22px;margin-top:10px">'+esc(number)+'</div>'+
+    '<div class="appraisal-next" style="margin-top:14px">This barcode isn\u2019t in the grocery database. Veya covers food &amp; groceries first \u2014 books, gadgets and other items come later. Try a supermarket food item.</div>'+
+    '</div>'+
+    '<div class="scan-actions"><button class="btn-primary" onclick="renderScan()">Scan again</button>'+
+    '<button class="btn-ghost" onclick="go(\'home\')">Home</button></div>';
+  window.scrollTo(0,0);
+}
+function renderLookupError(number){
+  app.innerHTML=mastHTML+
+    '<div class="card" style="text-align:center">'+
+    '<div class="qmark" style="border-color:var(--oxblood);color:var(--oxblood)">!</div>'+
+    '<div class="lbl">Couldn\u2019t reach the database</div>'+
+    '<div class="appraisal-next" style="margin-top:14px">Check your internet connection and try again.</div>'+
+    '</div>'+
+    '<div class="scan-actions"><button class="btn-primary" onclick="renderScan()">Try again</button>'+
     '<button class="btn-ghost" onclick="go(\'home\')">Home</button></div>';
   window.scrollTo(0,0);
 }
