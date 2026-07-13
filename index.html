@@ -22,10 +22,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{background:var(--bg)}
-body{
-  font-family:var(--sans);font-weight:300;color:var(--ink);
-  min-height:100vh;-webkit-font-smoothing:antialiased;
-}
+body{font-family:var(--sans);font-weight:300;color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
 #app{max-width:430px;margin:0 auto;padding:30px 18px 64px;min-height:100vh}
 .lbl{font-family:var(--sans);font-weight:400;font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--stone)}
 
@@ -54,7 +51,6 @@ body{
 
 .appraise{width:100%;margin-top:18px;cursor:pointer;background:var(--ink);color:var(--bg);border:none;border-radius:2px;padding:15px;font-family:var(--sans);font-weight:500;font-size:11px;letter-spacing:.28em;text-transform:uppercase;transition:background .2s,opacity .2s}
 .appraise:hover{background:#000}
-.appraise:disabled{opacity:.35;cursor:default}
 
 .subnote{text-align:center;margin-top:14px;font-family:var(--serif);font-style:italic;font-size:14.5px;color:var(--stone);line-height:1.5}
 .tryline{text-align:center;margin-top:8px;line-height:2}
@@ -64,22 +60,29 @@ body{
 .note{margin-top:18px;background:var(--card);border:1px solid var(--hair);border-left:2px solid var(--champagne);padding:14px 16px;font-family:var(--serif);font-style:italic;font-size:15.5px;line-height:1.55;color:var(--ink2)}
 
 .viewer{position:relative;width:100%;aspect-ratio:3/4;max-height:420px;background:var(--dark);border:1px solid var(--hair);border-radius:2px;overflow:hidden}
-.viewer .placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px}
-.viewer .placeholder p{font-family:var(--serif);font-style:italic;font-size:16px;color:#b8ae99;line-height:1.6}
-.viewer .placeholder em{color:#e6dcc4}
-.frame{position:absolute;inset:16%;pointer-events:none}
+#reader{position:absolute;inset:0;width:100%;height:100%}
+#reader video{width:100%!important;height:100%!important;object-fit:cover!important}
+#reader img{display:none!important}
+.frame{position:absolute;inset:16%;pointer-events:none;z-index:3}
 .frame span{position:absolute;width:26px;height:26px;border:1.5px solid #f3ecda}
 .frame .tl{top:0;left:0;border-right:none;border-bottom:none}
 .frame .tr{top:0;right:0;border-left:none;border-bottom:none}
 .frame .bl{bottom:0;left:0;border-right:none;border-top:none}
 .frame .br{bottom:0;right:0;border-left:none;border-top:none}
-.scanline{position:absolute;left:16%;right:16%;height:1px;background:var(--champagne);box-shadow:0 0 8px var(--champagne);animation:scan 2.4s ease-in-out infinite}
+.scanline{position:absolute;left:16%;right:16%;height:1px;background:var(--champagne);box-shadow:0 0 8px var(--champagne);animation:scan 2.4s ease-in-out infinite;z-index:3}
 @keyframes scan{0%,100%{top:18%}50%{top:82%}}
+.cam-msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;z-index:2}
+.cam-msg p{font-family:var(--serif);font-style:italic;font-size:16px;color:#c3b9a2;line-height:1.6}
+.scan-hint{text-align:center;margin-top:14px;font-family:var(--serif);font-style:italic;font-size:15px;color:var(--stone)}
 .scan-actions{display:flex;gap:10px;margin-top:16px}
 .scan-actions button{flex:1;cursor:pointer;border-radius:2px;padding:14px;font-family:var(--sans);font-weight:500;font-size:11px;letter-spacing:.24em;text-transform:uppercase}
 .btn-primary{background:var(--ink);color:var(--bg);border:none}
 .btn-ghost{background:transparent;color:var(--stone);border:1px solid var(--hair)}
 .btn-ghost:hover{border-color:var(--stone);color:var(--ink2)}
+
+.check{width:56px;height:56px;border-radius:50%;border:1.5px solid var(--sage);color:var(--sage);display:flex;align-items:center;justify-content:center;font-size:27px;margin:2px auto 16px}
+.scanned-num{font-family:var(--serif);font-weight:500;font-size:30px;letter-spacing:.06em;color:var(--ink);margin:4px 0;word-break:break-all}
+.scanned-note{font-family:var(--sans);font-weight:300;font-size:13.5px;line-height:1.6;color:var(--stone);margin-top:12px}
 
 .loading{margin-top:60px;text-align:center}
 .loading .l1{font-family:var(--serif);font-style:italic;font-size:22px;color:var(--ink2)}
@@ -130,8 +133,9 @@ body{
 <body>
 <div id="app"></div>
 
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
-/* ---- Veya — Phase 1 (front end + 5 offline examples) ---- */
+/* ---- Veya — Phase 2 (front end + 5 examples + real barcode camera) ---- */
 
 var DB = [
   { keys:["nurofen","ibuprofen"], product:"Nurofen", category:"Painkiller \u00b7 Ibuprofen",
@@ -183,82 +187,96 @@ var DB = [
 ];
 var EXAMPLES = ["Nurofen","Evian","Heinz Baked Beans","AirPods Max","Dyson Supersonic"];
 
-var productVal = "";
-var priceVal = "";
+var productVal = "", priceVal = "";
+var html5Qrcode = null, scanHandled = false;
 var app = document.getElementById("app");
 
 function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
-
-function stateFor(s){
-  if(s>=70) return {label:"Worth it", color:"var(--sage)"};
-  if(s>=45) return {label:"Premium tax", color:"var(--bronze)"};
-  return {label:"Overpriced", color:"var(--oxblood)"};
-}
+function stateFor(s){ if(s>=70)return{label:"Worth it",color:"var(--sage)"}; if(s>=45)return{label:"Premium tax",color:"var(--bronze)"}; return{label:"Overpriced",color:"var(--oxblood)"}; }
 function lookup(input){
-  var q = (input||"").trim().toLowerCase();
-  if(!q) return null;
-  for(var i=0;i<DB.length;i++){
-    for(var j=0;j<DB[i].keys.length;j++){
-      var k = DB[i].keys[j];
-      if(q.indexOf(k)!==-1 || k.indexOf(q)!==-1) return DB[i];
-    }
-  }
+  var q=(input||"").trim().toLowerCase(); if(!q)return null;
+  for(var i=0;i<DB.length;i++){for(var j=0;j<DB[i].keys.length;j++){var k=DB[i].keys[j];if(q.indexOf(k)!==-1||k.indexOf(q)!==-1)return DB[i];}}
   return null;
 }
 
-var mastHTML =
-  '<div class="mast"><div class="mark">VEYA</div><div class="rule"></div>'+
-  '<div class="sub">Spend with intention</div></div>';
+var mastHTML='<div class="mast"><div class="mark">VEYA</div><div class="rule"></div><div class="sub">Spend with intention</div></div>';
+var frameHTML='<div class="frame"><span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span></div>';
 
 function renderHome(note){
-  var bars = [7,3,5,2,8,4,3,6,2,7,5,3,8,2,4,6,3,7], barsHTML="";
-  for(var i=0;i<bars.length;i++){ barsHTML += '<i style="height:'+(bars[i]*4)+'px"></i>'; }
+  var bars=[7,3,5,2,8,4,3,6,2,7,5,3,8,2,4,6,3,7],barsHTML="";
+  for(var i=0;i<bars.length;i++){barsHTML+='<i style="height:'+(bars[i]*4)+'px"></i>';}
   var chips="";
-  for(var e=0;e<EXAMPLES.length;e++){
-    chips += '<b onclick="appraise(\''+EXAMPLES[e].replace(/'/g,"\\'")+'\')">'+esc(EXAMPLES[e])+'</b>';
-    if(e<EXAMPLES.length-1) chips += "  \u00b7  ";
-  }
-  app.innerHTML = mastHTML +
-    '<button class="scan-btn" onclick="go(\'scan\')"><div class="barcode">'+barsHTML+'</div>'+
-    '<div class="t">Scan a barcode</div></button>'+
+  for(var e=0;e<EXAMPLES.length;e++){chips+='<b onclick="appraise(\''+EXAMPLES[e].replace(/'/g,"\\'")+'\')">'+esc(EXAMPLES[e])+'</b>';if(e<EXAMPLES.length-1)chips+="  \u00b7  ";}
+  app.innerHTML=mastHTML+
+    '<button class="scan-btn" onclick="go(\'scan\')"><div class="barcode">'+barsHTML+'</div><div class="t">Scan a barcode</div></button>'+
     '<div class="divider"><span></span><em>or</em><span></span></div>'+
     '<label class="field-label">Appraise by name</label>'+
-    '<input id="q" class="tin" placeholder="Any product in the world\u2026" value="'+esc(productVal)+'" '+
-      'oninput="productVal=this.value" onkeydown="if(event.key===\'Enter\')doSearch()" />'+
-    '<div class="price-wrap"><label class="field-label">Price you\'d pay \u2014 optional</label>'+
-    '<span class="cur">\u00a3</span>'+
-    '<input id="p" class="tin" placeholder="0.00" inputmode="decimal" value="'+esc(priceVal)+'" '+
-      'oninput="priceVal=this.value" onkeydown="if(event.key===\'Enter\')doSearch()" /></div>'+
+    '<input id="q" class="tin" placeholder="Any product in the world\u2026" value="'+esc(productVal)+'" oninput="productVal=this.value" onkeydown="if(event.key===\'Enter\')doSearch()" />'+
+    '<div class="price-wrap"><label class="field-label">Price you\'d pay \u2014 optional</label><span class="cur">\u00a3</span>'+
+    '<input id="p" class="tin" placeholder="0.00" inputmode="decimal" value="'+esc(priceVal)+'" oninput="priceVal=this.value" onkeydown="if(event.key===\'Enter\')doSearch()" /></div>'+
     '<button class="appraise" onclick="doSearch()">Appraise</button>'+
-    (note ? '<div class="note">'+esc(note)+'</div>' : '')+
+    (note?'<div class="note">'+esc(note)+'</div>':'')+
     '<div class="subnote">These five answer instantly.<br>Live search of any product arrives in a later step.</div>'+
     '<div class="tryline">'+chips+'</div>';
 }
 
+/* ---- Barcode camera ---- */
 function renderScan(){
-  app.innerHTML = mastHTML +
-    '<div class="viewer"><div class="placeholder"><p>Camera scanning is added in the next build step.<br>'+
-    'Use <em>Simulate a scan</em> to try the flow.</p></div>'+
-    '<div class="frame"><span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span></div>'+
-    '<div class="scanline"></div></div>'+
-    '<div class="scan-actions"><button class="btn-primary" onclick="simulateScan()">Simulate a scan</button>'+
+  scanHandled=false;
+  app.innerHTML=mastHTML+
+    '<div class="viewer"><div id="reader"></div>'+frameHTML+'<div class="scanline"></div></div>'+
+    '<div class="scan-hint">Point the camera at a barcode</div>'+
+    '<div class="scan-actions"><button class="btn-ghost" onclick="cancelScan()">Cancel</button></div>';
+  window.scrollTo(0,0);
+  startScanner();
+}
+function startScanner(){
+  if(typeof Html5Qrcode==="undefined"){ camMessage("The scanner couldn\u2019t load. Check your connection, then tap Try again.",true); return; }
+  try{ html5Qrcode=new Html5Qrcode("reader",{verbose:false}); }
+  catch(e){ camMessage("Couldn\u2019t start the camera. Tap Try again.",true); return; }
+  html5Qrcode.start(
+    { facingMode:"environment" },
+    { fps:10 },
+    function(decodedText){ if(scanHandled)return; scanHandled=true; stopScanner(function(){ renderScanned(decodedText); }); },
+    function(){ /* per-frame no-match: ignore */ }
+  ).catch(function(){
+    camMessage("Veya needs camera access. Allow the camera when your browser asks, then tap Try again.",true);
+  });
+}
+function camMessage(msg,showRetry){
+  app.innerHTML=mastHTML+
+    '<div class="viewer"><div class="cam-msg"><p>'+esc(msg)+'</p></div>'+frameHTML+'</div>'+
+    '<div class="scan-actions">'+
+    (showRetry?'<button class="btn-primary" onclick="renderScan()">Try again</button>':'')+
     '<button class="btn-ghost" onclick="go(\'home\')">Cancel</button></div>';
 }
-
-function renderLoading(){
-  app.innerHTML = mastHTML +
-    '<div class="loading"><div class="l1">Appraising\u2026</div>'+
-    '<div class="l2">Checking prices \u00b7 finding cheaper</div><div class="dots"></div></div>';
+function stopScanner(cb){
+  if(html5Qrcode){
+    html5Qrcode.stop().then(function(){ try{html5Qrcode.clear();}catch(e){} html5Qrcode=null; if(cb)cb(); })
+                       .catch(function(){ html5Qrcode=null; if(cb)cb(); });
+  } else { if(cb)cb(); }
+}
+function cancelScan(){ stopScanner(function(){ go("home"); }); }
+function renderScanned(number){
+  app.innerHTML=mastHTML+
+    '<div class="card" style="text-align:center">'+
+    '<div class="check">\u2713</div>'+
+    '<div class="lbl">Scanned</div>'+
+    '<div class="scanned-num">'+esc(number)+'</div>'+
+    '<div class="scanned-note">Barcode read successfully. In the next step, Veya turns this number into the real product and its appraisal.</div>'+
+    '</div>'+
+    '<div class="scan-actions"><button class="btn-primary" onclick="renderScan()">Scan again</button>'+
+    '<button class="btn-ghost" onclick="go(\'home\')">Home</button></div>';
+  window.scrollTo(0,0);
 }
 
+/* ---- Name appraisal (5 examples) ---- */
+function renderLoading(){ app.innerHTML=mastHTML+'<div class="loading"><div class="l1">Appraising\u2026</div><div class="l2">Checking prices \u00b7 finding cheaper</div><div class="dots"></div></div>'; }
 function renderResult(r){
-  var st = stateFor(r.worthScore);
-  var html = mastHTML + '<div class="card">'+
-    '<div class="card-head"><div class="m">VEYA</div><div class="k">Appraisal</div></div>'+
-    '<hr class="hair" />'+
-    '<div class="pname">'+esc(r.product)+'</div>'+
-    (r.category?'<div class="pcat">'+esc(r.category)+'</div>':'')+
-    '<hr class="hair" />'+
+  var st=stateFor(r.worthScore);
+  var html=mastHTML+'<div class="card">'+
+    '<div class="card-head"><div class="m">VEYA</div><div class="k">Appraisal</div></div><hr class="hair" />'+
+    '<div class="pname">'+esc(r.product)+'</div>'+(r.category?'<div class="pcat">'+esc(r.category)+'</div>':'')+'<hr class="hair" />'+
     '<div class="verdict-block"><div><div class="vlabel">The verdict</div>'+
     '<div class="vword" style="color:'+st.color+'">'+esc(st.label)+'</div></div>'+
     '<div class="score"><b style="color:'+st.color+'">'+r.worthScore+'</b><span> /100</span></div></div>'+
@@ -267,62 +285,30 @@ function renderResult(r){
     '<div class="row"><span class="rk">Typical price</span><span class="rv">'+esc(r.typicalPrice)+'</span></div>'+
     (r.userPrice?'<div class="row"><span class="rk">You\'d pay</span><span class="rv">'+esc(r.userPrice)+'</span></div>':'')+
     (r.priceVerdict?'<div class="pverdict">'+esc(r.priceVerdict)+'</div>':'')+
-    '<hr class="hair" />'+
-    '<div class="lbl" style="margin-bottom:10px">The assessment</div>'+
-    '<div class="assess">'+esc(r.summary)+'</div>';
-  if(r.payingFor && r.payingFor.length){
-    html += '<div class="lbl" style="margin:20px 0 10px">What the price buys</div><div class="pf">';
-    for(var i=0;i<r.payingFor.length;i++) html += '<span>'+esc(r.payingFor[i])+'</span>';
-    html += '</div>';
-  }
-  if(r.alternatives && r.alternatives.length){
-    html += '<hr class="hair" /><div class="lbl" style="margin-bottom:12px">Considered alternatives</div>';
-    for(var a=0;a<r.alternatives.length;a++){
-      var alt=r.alternatives[a];
-      html += '<div class="alt'+(a===0?' first':'')+'"><div class="alt-top">'+
-        '<div class="alt-name">'+esc(alt.name)+'</div><div class="alt-price">'+esc(alt.price)+'</div></div>'+
-        '<div class="alt-meta"><span class="alt-tag '+(alt.verdict==="better"?"superior":"equal")+'">'+
-        (alt.verdict==="better"?"Superior":"Equal")+'</span>'+
-        (alt.savings?'<span class="alt-saves">Saves '+esc(alt.savings)+'</span>':'')+'</div>'+
-        '<div class="alt-why">'+esc(alt.why)+'</div></div>';
+    '<hr class="hair" /><div class="lbl" style="margin-bottom:10px">The assessment</div><div class="assess">'+esc(r.summary)+'</div>';
+  if(r.payingFor&&r.payingFor.length){ html+='<div class="lbl" style="margin:20px 0 10px">What the price buys</div><div class="pf">'; for(var i=0;i<r.payingFor.length;i++)html+='<span>'+esc(r.payingFor[i])+'</span>'; html+='</div>'; }
+  if(r.alternatives&&r.alternatives.length){
+    html+='<hr class="hair" /><div class="lbl" style="margin-bottom:12px">Considered alternatives</div>';
+    for(var a=0;a<r.alternatives.length;a++){var alt=r.alternatives[a];
+      html+='<div class="alt'+(a===0?' first':'')+'"><div class="alt-top"><div class="alt-name">'+esc(alt.name)+'</div><div class="alt-price">'+esc(alt.price)+'</div></div>'+
+        '<div class="alt-meta"><span class="alt-tag '+(alt.verdict==="better"?"superior":"equal")+'">'+(alt.verdict==="better"?"Superior":"Equal")+'</span>'+
+        (alt.savings?'<span class="alt-saves">Saves '+esc(alt.savings)+'</span>':'')+'</div><div class="alt-why">'+esc(alt.why)+'</div></div>';
     }
   }
-  html += (r.source?'<div class="src">'+esc(r.source)+'</div>':'')+
-    '<hr class="hair" /><div class="card-foot">VEYA</div></div>'+
+  html+=(r.source?'<div class="src">'+esc(r.source)+'</div>':'')+'<hr class="hair" /><div class="card-foot">VEYA</div></div>'+
     '<button class="again" onclick="go(\'home\')">Appraise another</button>';
-  app.innerHTML = html;
+  app.innerHTML=html;
 }
-
-function go(screen){
-  if(screen==="home") renderHome();
-  else if(screen==="scan") renderScan();
-  else if(screen==="loading") renderLoading();
-  window.scrollTo(0,0);
-}
-
+function go(screen){ if(screen==="home")renderHome(); else if(screen==="scan")renderScan(); window.scrollTo(0,0); }
 function appraise(name){
-  var match = lookup(name);
-  if(!match){
-    renderHome("Live search of any product arrives in a later build step. For now, try one of the five below.");
-    window.scrollTo(0,0);
-    return;
-  }
-  renderLoading();
-  window.scrollTo(0,0);
-  var payPrice = (priceVal && priceVal.trim()) ? ("\u00a3"+priceVal.trim()) : null;
-  var data = {};
-  for(var k in match) data[k]=match[k];
-  data.userPrice = payPrice;
-  data.source = "offline example";
-  setTimeout(function(){ renderResult(data); window.scrollTo(0,0); }, 700);
+  var match=lookup(name);
+  if(!match){ renderHome("Live search of any product arrives in a later build step. For now, try one of the five below."); window.scrollTo(0,0); return; }
+  renderLoading(); window.scrollTo(0,0);
+  var payPrice=(priceVal&&priceVal.trim())?("\u00a3"+priceVal.trim()):null;
+  var data={}; for(var k in match)data[k]=match[k]; data.userPrice=payPrice; data.source="offline example";
+  setTimeout(function(){ renderResult(data); window.scrollTo(0,0); },700);
 }
-
 function doSearch(){ appraise(productVal); }
-
-function simulateScan(){
-  var pick = DB[Math.floor(Math.random()*DB.length)];
-  appraise(pick.product);
-}
 
 renderHome();
 </script>
