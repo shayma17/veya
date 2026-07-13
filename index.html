@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#ece5d6" />
+<title>Veya — Considered spending</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#ece5d6; --bg2:#e4dcc9;
+  --card:#f8f4ea; --card2:#f1ebdd;
+  --ink:#2a2418; --ink2:#4a4230;
+  --stone:#8a8072; --stone2:#a29885;
+  --hair:#d7ceba; --champagne:#a98545;
+  --sage:#5c7360; --bronze:#8c6c34; --oxblood:#93463e;
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'Jost',system-ui,-apple-system,sans-serif;
+  --dark:#1a1712;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg)}
+body{
+  font-family:var(--sans);font-weight:300;color:var(--ink);
+  min-height:100vh;-webkit-font-smoothing:antialiased;
+}
+#app{max-width:430px;margin:0 auto;padding:30px 18px 64px;min-height:100vh}
+.lbl{font-family:var(--sans);font-weight:400;font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--stone)}
+
+.mast{text-align:center;margin:14px 0 30px}
+.mark{font-family:var(--serif);font-weight:500;font-size:38px;letter-spacing:.36em;text-indent:.36em;color:var(--ink)}
+.mast .rule{width:34px;height:1px;background:var(--champagne);margin:12px auto 11px}
+.mast .sub{font-family:var(--sans);font-weight:400;font-size:10px;letter-spacing:.34em;text-transform:uppercase;color:var(--stone)}
+
+.scan-btn{width:100%;background:var(--card);color:var(--ink);cursor:pointer;border:1px solid var(--hair);border-radius:2px;padding:22px 20px;display:flex;flex-direction:column;align-items:center;gap:14px;transition:border-color .25s,background .25s}
+.scan-btn:hover{border-color:var(--champagne);background:var(--card2)}
+.barcode{display:flex;align-items:flex-end;gap:2px;height:34px}
+.barcode i{display:block;width:2px;background:var(--ink);opacity:.85}
+.scan-btn .t{font-family:var(--sans);font-weight:400;font-size:12px;letter-spacing:.26em;text-transform:uppercase}
+
+.divider{display:flex;align-items:center;gap:14px;margin:22px 2px}
+.divider span{flex:1;height:1px;background:var(--hair)}
+.divider em{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--stone)}
+
+.field-label{display:block;font-family:var(--sans);font-weight:400;font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--stone);margin:0 0 9px 1px}
+.tin{width:100%;background:var(--card);border:1px solid var(--hair);color:var(--ink);border-radius:2px;padding:14px 15px;font-family:var(--serif);font-size:19px;outline:none;transition:border-color .2s}
+.tin::placeholder{color:#a89e8a;font-style:italic}
+.tin:focus{border-color:var(--champagne)}
+.price-wrap{position:relative;margin-top:14px}
+.price-wrap .cur{position:absolute;left:15px;bottom:14px;font-family:var(--serif);font-size:19px;color:var(--stone);pointer-events:none}
+.price-wrap .tin{padding-left:30px}
+
+.appraise{width:100%;margin-top:18px;cursor:pointer;background:var(--ink);color:var(--bg);border:none;border-radius:2px;padding:15px;font-family:var(--sans);font-weight:500;font-size:11px;letter-spacing:.28em;text-transform:uppercase;transition:background .2s,opacity .2s}
+.appraise:hover{background:#000}
+.appraise:disabled{opacity:.35;cursor:default}
+
+.subnote{text-align:center;margin-top:14px;font-family:var(--serif);font-style:italic;font-size:14.5px;color:var(--stone);line-height:1.5}
+.tryline{text-align:center;margin-top:8px;line-height:2}
+.tryline b{font-weight:400;font-family:var(--sans);font-size:12px;letter-spacing:.02em;color:var(--ink2);cursor:pointer;border-bottom:1px solid var(--hair);padding-bottom:1px}
+.tryline b:hover{color:var(--champagne);border-color:var(--champagne)}
+
+.note{margin-top:18px;background:var(--card);border:1px solid var(--hair);border-left:2px solid var(--champagne);padding:14px 16px;font-family:var(--serif);font-style:italic;font-size:15.5px;line-height:1.55;color:var(--ink2)}
+
+.viewer{position:relative;width:100%;aspect-ratio:3/4;max-height:420px;background:var(--dark);border:1px solid var(--hair);border-radius:2px;overflow:hidden}
+.viewer .placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px}
+.viewer .placeholder p{font-family:var(--serif);font-style:italic;font-size:16px;color:#b8ae99;line-height:1.6}
+.viewer .placeholder em{color:#e6dcc4}
+.frame{position:absolute;inset:16%;pointer-events:none}
+.frame span{position:absolute;width:26px;height:26px;border:1.5px solid #f3ecda}
+.frame .tl{top:0;left:0;border-right:none;border-bottom:none}
+.frame .tr{top:0;right:0;border-left:none;border-bottom:none}
+.frame .bl{bottom:0;left:0;border-right:none;border-top:none}
+.frame .br{bottom:0;right:0;border-left:none;border-top:none}
+.scanline{position:absolute;left:16%;right:16%;height:1px;background:var(--champagne);box-shadow:0 0 8px var(--champagne);animation:scan 2.4s ease-in-out infinite}
+@keyframes scan{0%,100%{top:18%}50%{top:82%}}
+.scan-actions{display:flex;gap:10px;margin-top:16px}
+.scan-actions button{flex:1;cursor:pointer;border-radius:2px;padding:14px;font-family:var(--sans);font-weight:500;font-size:11px;letter-spacing:.24em;text-transform:uppercase}
+.btn-primary{background:var(--ink);color:var(--bg);border:none}
+.btn-ghost{background:transparent;color:var(--stone);border:1px solid var(--hair)}
+.btn-ghost:hover{border-color:var(--stone);color:var(--ink2)}
+
+.loading{margin-top:60px;text-align:center}
+.loading .l1{font-family:var(--serif);font-style:italic;font-size:22px;color:var(--ink2)}
+.loading .l2{margin-top:8px;font-family:var(--sans);font-weight:400;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--stone)}
+.loading .dots{width:30px;height:1px;background:var(--champagne);margin:20px auto 0;animation:pulse 1.3s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.25;width:20px}50%{opacity:1;width:44px}}
+
+.card{background:var(--card);color:var(--ink);border:1px solid var(--hair);border-radius:2px;padding:30px 26px 26px;box-shadow:0 20px 50px -34px #6b5f45}
+.card-head{display:flex;justify-content:space-between;align-items:baseline}
+.card-head .m{font-family:var(--serif);font-weight:500;font-size:15px;letter-spacing:.3em;text-indent:.3em}
+.card-head .k{font-family:var(--sans);font-weight:400;font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--stone)}
+.hair{border:none;border-top:1px solid var(--hair);margin:20px 0}
+.hair.tight{margin:15px 0}
+.pname{font-family:var(--serif);font-weight:600;font-size:30px;line-height:1.12;margin:2px 0 6px;color:var(--ink)}
+.pcat{font-family:var(--sans);font-weight:400;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--stone)}
+.verdict-block{display:flex;justify-content:space-between;align-items:flex-end;gap:16px}
+.verdict-block .vlabel{font-family:var(--sans);font-weight:400;font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--stone);margin-bottom:6px}
+.verdict-block .vword{font-family:var(--serif);font-weight:600;font-size:34px;line-height:.95}
+.score{text-align:right;white-space:nowrap}
+.score b{font-family:var(--serif);font-weight:500;font-size:40px;line-height:.9}
+.score span{font-family:var(--serif);font-size:19px;color:var(--stone)}
+.meter{height:1.5px;background:var(--hair);margin:16px 0 2px;overflow:hidden}
+.meter i{display:block;height:100%;transition:width .7s cubic-bezier(.2,.7,.2,1)}
+.row{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0}
+.row .rk{font-family:var(--sans);font-weight:400;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--stone)}
+.row .rv{font-family:var(--serif);font-weight:500;font-size:19px;color:var(--ink)}
+.pverdict{font-family:var(--serif);font-style:italic;font-size:16px;line-height:1.5;color:var(--ink2);margin-top:8px}
+.assess{font-family:var(--sans);font-weight:300;font-size:14.5px;line-height:1.65;color:var(--ink2)}
+.pf{display:flex;flex-wrap:wrap;gap:7px;margin-top:2px}
+.pf span{border:1px solid var(--hair);border-radius:2px;padding:5px 11px;font-family:var(--sans);font-weight:400;font-size:11px;letter-spacing:.04em;color:var(--ink2)}
+.alt{padding:14px 0;border-top:1px solid var(--hair)}
+.alt.first{border-top:none;padding-top:2px}
+.alt-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.alt-name{font-family:var(--serif);font-weight:600;font-size:19px;color:var(--ink);line-height:1.15}
+.alt-price{font-family:var(--serif);font-weight:500;font-size:19px;white-space:nowrap}
+.alt-meta{display:flex;align-items:center;gap:12px;margin:6px 0 5px}
+.alt-tag{font-family:var(--sans);font-weight:400;font-size:9px;letter-spacing:.24em;text-transform:uppercase}
+.alt-tag.equal{color:var(--stone)}
+.alt-tag.superior{color:var(--sage)}
+.alt-saves{font-family:var(--sans);font-weight:400;font-size:11px;letter-spacing:.12em;color:var(--ink2)}
+.alt-why{font-family:var(--sans);font-weight:300;font-size:13px;line-height:1.5;color:var(--stone)}
+.src{margin-top:14px;font-family:var(--sans);font-weight:400;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--stone2);text-align:center}
+.card-foot{text-align:center;font-family:var(--serif);font-weight:500;font-size:13px;letter-spacing:.34em;text-indent:.34em;color:var(--hair);padding-top:8px}
+.again{width:100%;margin-top:16px;background:transparent;color:var(--stone);border:1px solid var(--hair);border-radius:2px;padding:14px;cursor:pointer;font-family:var(--sans);font-weight:500;font-size:11px;letter-spacing:.26em;text-transform:uppercase}
+.again:hover{border-color:var(--champagne);color:var(--ink2)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ---- Veya — Phase 1 (front end + 5 offline examples) ---- */
+
+var DB = [
+  { keys:["nurofen","ibuprofen"], product:"Nurofen", category:"Painkiller \u00b7 Ibuprofen",
+    worthScore:14, typicalPrice:"\u00a32.50 / 16",
+    priceVerdict:"The very same medicine as the 40p box. You are paying for the name.",
+    summary:"By law, own-brand ibuprofen carries the exact same active ingredient and dose as Nurofen. The tablet performs identically \u2014 the difference lives entirely in the packaging and the price.",
+    payingFor:["The brand name","Packaging"],
+    alternatives:[
+      {name:"Own-brand ibuprofen",price:"\u00a30.40",savings:"\u00a32.10",verdict:"same",why:"Identical active ingredient, dose and effect."},
+      {name:"Value ibuprofen",price:"\u00a30.35",savings:"\u00a32.15",verdict:"same",why:"The same drug, for pennies."}
+    ] },
+  { keys:["evian","bottled water","water"], product:"Evian", category:"Bottled Water",
+    worthScore:8, typicalPrice:"\u00a30.85 / 500ml",
+    priceVerdict:"It is water. There is a tap at home.",
+    summary:"Bottled water is among the largest mark-ups in any shop. Unless your tap water is genuinely poor, a refillable bottle performs the exact same service for close to nothing.",
+    payingFor:["Convenience","The brand","The bottle"],
+    alternatives:[
+      {name:"Tap & refillable bottle",price:"~\u00a30",savings:"\u00a30.85 a go",verdict:"same",why:"The same water, no mark-up, no plastic."},
+      {name:"Own-brand still water",price:"\u00a30.17",savings:"\u00a30.68",verdict:"same",why:"The same, cheaper, should you insist."}
+    ] },
+  { keys:["heinz baked beans","heinz","baked beans","beans"], product:"Heinz Baked Beans", category:"Tinned Beans",
+    worthScore:46, typicalPrice:"\u00a31.40 / 415g",
+    priceVerdict:"A touch nicer to some \u2014 though not a pound-a-tin nicer.",
+    summary:"Heinz has genuine devotees, so this is no outright swindle. Yet own-brand beans sit close enough that most cannot tell them apart blind \u2014 at a third of the price.",
+    payingFor:["Taste (arguably)","The brand","Habit"],
+    alternatives:[
+      {name:"Own-brand baked beans",price:"\u00a30.40",savings:"\u00a31.00",verdict:"same",why:"Very close on taste, a third of the price."},
+      {name:"Value range beans",price:"\u00a30.28",savings:"\u00a31.12",verdict:"same",why:"Perfectly at home on toast."}
+    ] },
+  { keys:["airpods max","airpods"], product:"AirPods Max", category:"Over-ear Headphones",
+    worthScore:42, typicalPrice:"\u00a3499",
+    priceVerdict:"Accomplished \u2014 but not two-hundred-pounds better than its rivals.",
+    summary:"A beautifully made pair, seamless within Apple's world. On sound and noise-cancelling alone, quieter names match or surpass them; much of the price is the emblem and the aluminium.",
+    payingFor:["Apple","Build","Ecosystem"],
+    alternatives:[
+      {name:"Sony WH-1000XM5",price:"\u00a3300",savings:"\u00a3200",verdict:"better",why:"Superior noise-cancelling, lighter, longer battery."},
+      {name:"Sennheiser Momentum 4",price:"\u00a3280",savings:"\u00a3220",verdict:"same",why:"Richer sound, a 60-hour battery."},
+      {name:"Soundcore Space One",price:"\u00a390",savings:"\u00a3400",verdict:"same",why:"Much of the experience, a fifth of the price."}
+    ] },
+  { keys:["dyson supersonic","dyson","hair dryer","hairdryer"], product:"Dyson Supersonic", category:"Hair Dryer",
+    worthScore:48, typicalPrice:"\u00a3330",
+    priceVerdict:"Genuinely fine \u2014 though rivals now meet it for far less.",
+    summary:"Fast, quiet and kind to hair. The difficulty is that competitors have since matched the engineering and ask a fraction of the price for comparable results.",
+    payingFor:["Dyson","Fast drying","Heat control"],
+    alternatives:[
+      {name:"Shark FlexStyle",price:"\u00a3170",savings:"\u00a3160",verdict:"better",why:"Dries and styles, more tools, half the price."},
+      {name:"Laifen Swift",price:"\u00a3100",savings:"\u00a3230",verdict:"same",why:"The same fast-dry engineering, far less."}
+    ] }
+];
+var EXAMPLES = ["Nurofen","Evian","Heinz Baked Beans","AirPods Max","Dyson Supersonic"];
+
+var productVal = "";
+var priceVal = "";
+var app = document.getElementById("app");
+
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+function stateFor(s){
+  if(s>=70) return {label:"Worth it", color:"var(--sage)"};
+  if(s>=45) return {label:"Premium tax", color:"var(--bronze)"};
+  return {label:"Overpriced", color:"var(--oxblood)"};
+}
+function lookup(input){
+  var q = (input||"").trim().toLowerCase();
+  if(!q) return null;
+  for(var i=0;i<DB.length;i++){
+    for(var j=0;j<DB[i].keys.length;j++){
+      var k = DB[i].keys[j];
+      if(q.indexOf(k)!==-1 || k.indexOf(q)!==-1) return DB[i];
+    }
+  }
+  return null;
+}
+
+var mastHTML =
+  '<div class="mast"><div class="mark">VEYA</div><div class="rule"></div>'+
+  '<div class="sub">Spend with intention</div></div>';
+
+function renderHome(note){
+  var bars = [7,3,5,2,8,4,3,6,2,7,5,3,8,2,4,6,3,7], barsHTML="";
+  for(var i=0;i<bars.length;i++){ barsHTML += '<i style="height:'+(bars[i]*4)+'px"></i>'; }
+  var chips="";
+  for(var e=0;e<EXAMPLES.length;e++){
+    chips += '<b onclick="appraise(\''+EXAMPLES[e].replace(/'/g,"\\'")+'\')">'+esc(EXAMPLES[e])+'</b>';
+    if(e<EXAMPLES.length-1) chips += "  \u00b7  ";
+  }
+  app.innerHTML = mastHTML +
+    '<button class="scan-btn" onclick="go(\'scan\')"><div class="barcode">'+barsHTML+'</div>'+
+    '<div class="t">Scan a barcode</div></button>'+
+    '<div class="divider"><span></span><em>or</em><span></span></div>'+
+    '<label class="field-label">Appraise by name</label>'+
+    '<input id="q" class="tin" placeholder="Any product in the world\u2026" value="'+esc(productVal)+'" '+
+      'oninput="productVal=this.value" onkeydown="if(event.key===\'Enter\')doSearch()" />'+
+    '<div class="price-wrap"><label class="field-label">Price you\'d pay \u2014 optional</label>'+
+    '<span class="cur">\u00a3</span>'+
+    '<input id="p" class="tin" placeholder="0.00" inputmode="decimal" value="'+esc(priceVal)+'" '+
+      'oninput="priceVal=this.value" onkeydown="if(event.key===\'Enter\')doSearch()" /></div>'+
+    '<button class="appraise" onclick="doSearch()">Appraise</button>'+
+    (note ? '<div class="note">'+esc(note)+'</div>' : '')+
+    '<div class="subnote">These five answer instantly.<br>Live search of any product arrives in a later step.</div>'+
+    '<div class="tryline">'+chips+'</div>';
+}
+
+function renderScan(){
+  app.innerHTML = mastHTML +
+    '<div class="viewer"><div class="placeholder"><p>Camera scanning is added in the next build step.<br>'+
+    'Use <em>Simulate a scan</em> to try the flow.</p></div>'+
+    '<div class="frame"><span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span></div>'+
+    '<div class="scanline"></div></div>'+
+    '<div class="scan-actions"><button class="btn-primary" onclick="simulateScan()">Simulate a scan</button>'+
+    '<button class="btn-ghost" onclick="go(\'home\')">Cancel</button></div>';
+}
+
+function renderLoading(){
+  app.innerHTML = mastHTML +
+    '<div class="loading"><div class="l1">Appraising\u2026</div>'+
+    '<div class="l2">Checking prices \u00b7 finding cheaper</div><div class="dots"></div></div>';
+}
+
+function renderResult(r){
+  var st = stateFor(r.worthScore);
+  var html = mastHTML + '<div class="card">'+
+    '<div class="card-head"><div class="m">VEYA</div><div class="k">Appraisal</div></div>'+
+    '<hr class="hair" />'+
+    '<div class="pname">'+esc(r.product)+'</div>'+
+    (r.category?'<div class="pcat">'+esc(r.category)+'</div>':'')+
+    '<hr class="hair" />'+
+    '<div class="verdict-block"><div><div class="vlabel">The verdict</div>'+
+    '<div class="vword" style="color:'+st.color+'">'+esc(st.label)+'</div></div>'+
+    '<div class="score"><b style="color:'+st.color+'">'+r.worthScore+'</b><span> /100</span></div></div>'+
+    '<div class="meter"><i style="width:'+Math.max(3,Math.min(100,r.worthScore))+'%;background:'+st.color+'"></i></div>'+
+    '<hr class="hair tight" />'+
+    '<div class="row"><span class="rk">Typical price</span><span class="rv">'+esc(r.typicalPrice)+'</span></div>'+
+    (r.userPrice?'<div class="row"><span class="rk">You\'d pay</span><span class="rv">'+esc(r.userPrice)+'</span></div>':'')+
+    (r.priceVerdict?'<div class="pverdict">'+esc(r.priceVerdict)+'</div>':'')+
+    '<hr class="hair" />'+
+    '<div class="lbl" style="margin-bottom:10px">The assessment</div>'+
+    '<div class="assess">'+esc(r.summary)+'</div>';
+  if(r.payingFor && r.payingFor.length){
+    html += '<div class="lbl" style="margin:20px 0 10px">What the price buys</div><div class="pf">';
+    for(var i=0;i<r.payingFor.length;i++) html += '<span>'+esc(r.payingFor[i])+'</span>';
+    html += '</div>';
+  }
+  if(r.alternatives && r.alternatives.length){
+    html += '<hr class="hair" /><div class="lbl" style="margin-bottom:12px">Considered alternatives</div>';
+    for(var a=0;a<r.alternatives.length;a++){
+      var alt=r.alternatives[a];
+      html += '<div class="alt'+(a===0?' first':'')+'"><div class="alt-top">'+
+        '<div class="alt-name">'+esc(alt.name)+'</div><div class="alt-price">'+esc(alt.price)+'</div></div>'+
+        '<div class="alt-meta"><span class="alt-tag '+(alt.verdict==="better"?"superior":"equal")+'">'+
+        (alt.verdict==="better"?"Superior":"Equal")+'</span>'+
+        (alt.savings?'<span class="alt-saves">Saves '+esc(alt.savings)+'</span>':'')+'</div>'+
+        '<div class="alt-why">'+esc(alt.why)+'</div></div>';
+    }
+  }
+  html += (r.source?'<div class="src">'+esc(r.source)+'</div>':'')+
+    '<hr class="hair" /><div class="card-foot">VEYA</div></div>'+
+    '<button class="again" onclick="go(\'home\')">Appraise another</button>';
+  app.innerHTML = html;
+}
+
+function go(screen){
+  if(screen==="home") renderHome();
+  else if(screen==="scan") renderScan();
+  else if(screen==="loading") renderLoading();
+  window.scrollTo(0,0);
+}
+
+function appraise(name){
+  var match = lookup(name);
+  if(!match){
+    renderHome("Live search of any product arrives in a later build step. For now, try one of the five below.");
+    window.scrollTo(0,0);
+    return;
+  }
+  renderLoading();
+  window.scrollTo(0,0);
+  var payPrice = (priceVal && priceVal.trim()) ? ("\u00a3"+priceVal.trim()) : null;
+  var data = {};
+  for(var k in match) data[k]=match[k];
+  data.userPrice = payPrice;
+  data.source = "offline example";
+  setTimeout(function(){ renderResult(data); window.scrollTo(0,0); }, 700);
+}
+
+function doSearch(){ appraise(productVal); }
+
+function simulateScan(){
+  var pick = DB[Math.floor(Math.random()*DB.length)];
+  appraise(pick.product);
+}
+
+renderHome();
+</script>
+</body>
+</html>
