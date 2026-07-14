@@ -52,7 +52,7 @@ body{font-family:var(--sans);font-weight:300;color:var(--ink);min-height:100vh;-
 .appraise{width:100%;margin-top:18px;cursor:pointer;background:var(--ink);color:var(--bg);border:none;border-radius:2px;padding:15px;font-family:var(--sans);font-weight:500;font-size:11px;letter-spacing:.28em;text-transform:uppercase;transition:background .2s}
 .appraise:hover{background:#000}
 
-.subnote{text-align:center;margin-top:14px;font-family:var(--serif);font-style:italic;font-size:14.5px;color:var(--stone);line-height:1.5}
+.subnote{text-align:center;margin-top:16px;font-family:var(--serif);font-style:italic;font-size:14.5px;color:var(--stone);line-height:1.5}
 .tryline{text-align:center;margin-top:8px;line-height:2}
 .tryline b{font-weight:400;font-family:var(--sans);font-size:12px;letter-spacing:.02em;color:var(--ink2);cursor:pointer;border-bottom:1px solid var(--hair);padding-bottom:1px}
 .tryline b:hover{color:var(--champagne);border-color:var(--champagne)}
@@ -79,13 +79,8 @@ body{font-family:var(--sans);font-weight:300;color:var(--ink);min-height:100vh;-
 .btn-primary{background:var(--ink);color:var(--bg);border:none}
 .btn-ghost{background:transparent;color:var(--stone);border:1px solid var(--hair)}
 .btn-ghost:hover{border-color:var(--stone);color:var(--ink2)}
-
-.prod-img{max-width:150px;max-height:150px;width:auto;margin:0 auto 18px;display:block;background:#fff;border:1px solid var(--hair);border-radius:2px;padding:10px;object-fit:contain}
-.found-note{font-family:var(--sans);font-weight:400;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--sage);margin-bottom:4px}
-.appraisal-next{font-family:var(--sans);font-weight:300;font-size:13.5px;line-height:1.6;color:var(--stone);margin-top:6px}
-.barcode-num{font-family:var(--serif);font-size:17px;letter-spacing:.06em;color:var(--stone);word-break:break-all}
-.barcode-num small{display:block;font-family:var(--sans);font-weight:400;font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:var(--stone2);margin-bottom:5px}
 .qmark{width:56px;height:56px;border-radius:50%;border:1.5px solid var(--bronze);color:var(--bronze);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:30px;margin:2px auto 16px}
+.msg-note{font-family:var(--sans);font-weight:300;font-size:13.5px;line-height:1.6;color:var(--stone);margin-top:12px}
 
 .loading{margin-top:60px;text-align:center}
 .loading .l1{font-family:var(--serif);font-style:italic;font-size:22px;color:var(--ink2)}
@@ -138,8 +133,9 @@ body{font-family:var(--sans);font-weight:300;color:var(--ink);min-height:100vh;-
 
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
-/* ---- Veya — Phase 3 (camera + Open Food Facts product lookup) ---- */
+/* ---- Veya — Phase 4 (live AI verdict via /api/appraise) ---- */
 
+/* Offline fallback set — used only if the live engine can't be reached. */
 var DB = [
   { keys:["nurofen","ibuprofen"], product:"Nurofen", category:"Painkiller \u00b7 Ibuprofen",
     worthScore:14, typicalPrice:"\u00a32.50 / 16",
@@ -167,25 +163,6 @@ var DB = [
     alternatives:[
       {name:"Own-brand baked beans",price:"\u00a30.40",savings:"\u00a31.00",verdict:"same",why:"Very close on taste, a third of the price."},
       {name:"Value range beans",price:"\u00a30.28",savings:"\u00a31.12",verdict:"same",why:"Perfectly at home on toast."}
-    ] },
-  { keys:["airpods max","airpods"], product:"AirPods Max", category:"Over-ear Headphones",
-    worthScore:42, typicalPrice:"\u00a3499",
-    priceVerdict:"Accomplished \u2014 but not two-hundred-pounds better than its rivals.",
-    summary:"A beautifully made pair, seamless within Apple's world. On sound and noise-cancelling alone, quieter names match or surpass them; much of the price is the emblem and the aluminium.",
-    payingFor:["Apple","Build","Ecosystem"],
-    alternatives:[
-      {name:"Sony WH-1000XM5",price:"\u00a3300",savings:"\u00a3200",verdict:"better",why:"Superior noise-cancelling, lighter, longer battery."},
-      {name:"Sennheiser Momentum 4",price:"\u00a3280",savings:"\u00a3220",verdict:"same",why:"Richer sound, a 60-hour battery."},
-      {name:"Soundcore Space One",price:"\u00a390",savings:"\u00a3400",verdict:"same",why:"Much of the experience, a fifth of the price."}
-    ] },
-  { keys:["dyson supersonic","dyson","hair dryer","hairdryer"], product:"Dyson Supersonic", category:"Hair Dryer",
-    worthScore:48, typicalPrice:"\u00a3330",
-    priceVerdict:"Genuinely fine \u2014 though rivals now meet it for far less.",
-    summary:"Fast, quiet and kind to hair. The difficulty is that competitors have since matched the engineering and ask a fraction of the price for comparable results.",
-    payingFor:["Dyson","Fast drying","Heat control"],
-    alternatives:[
-      {name:"Shark FlexStyle",price:"\u00a3170",savings:"\u00a3160",verdict:"better",why:"Dries and styles, more tools, half the price."},
-      {name:"Laifen Swift",price:"\u00a3100",savings:"\u00a3230",verdict:"same",why:"The same fast-dry engineering, far less."}
     ] }
 ];
 var EXAMPLES = ["Nurofen","Evian","Heinz Baked Beans","AirPods Max","Dyson Supersonic"];
@@ -196,7 +173,7 @@ var app = document.getElementById("app");
 
 function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 function stateFor(s){ if(s>=70)return{label:"Worth it",color:"var(--sage)"}; if(s>=45)return{label:"Premium tax",color:"var(--bronze)"}; return{label:"Overpriced",color:"var(--oxblood)"}; }
-function lookup(input){
+function lookupLocal(input){
   var q=(input||"").trim().toLowerCase(); if(!q)return null;
   for(var i=0;i<DB.length;i++){for(var j=0;j<DB[i].keys.length;j++){var k=DB[i].keys[j];if(q.indexOf(k)!==-1||k.indexOf(q)!==-1)return DB[i];}}
   return null;
@@ -219,8 +196,22 @@ function renderHome(note){
     '<input id="p" class="tin" placeholder="0.00" inputmode="decimal" value="'+esc(priceVal)+'" oninput="priceVal=this.value" onkeydown="if(event.key===\'Enter\')doSearch()" /></div>'+
     '<button class="appraise" onclick="doSearch()">Appraise</button>'+
     (note?'<div class="note">'+esc(note)+'</div>':'')+
-    '<div class="subnote">These five answer instantly.<br>Live search of any product arrives in a later step.</div>'+
+    '<div class="subnote">Type any product, or scan a barcode.</div>'+
     '<div class="tryline">'+chips+'</div>';
+}
+
+/* ---- The live engine call ---- */
+function callEngine(product, price){
+  return fetch("/api/appraise",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({product:product, price:price||""})
+  }).then(function(res){
+    return res.json().then(function(data){
+      if(!res.ok) throw new Error((data&&data.error)||"engine error");
+      return data;
+    });
+  });
 }
 
 /* ---- Barcode camera ---- */
@@ -258,67 +249,49 @@ function stopScanner(cb){
   } else { if(cb)cb(); }
 }
 function cancelScan(){ stopScanner(function(){ go("home"); }); }
+function scanMessage(title,msg){
+  app.innerHTML=mastHTML+
+    '<div class="card" style="text-align:center"><div class="qmark">?</div><div class="lbl">'+esc(title)+'</div>'+
+    '<div class="msg-note">'+esc(msg)+'</div></div>'+
+    '<div class="scan-actions"><button class="btn-primary" onclick="renderScan()">Scan again</button>'+
+    '<button class="btn-ghost" onclick="go(\'home\')">Home</button></div>';
+  window.scrollTo(0,0);
+}
 
-/* ---- Open Food Facts lookup ---- */
+/* ---- Barcode -> product name (Open Food Facts) -> live verdict ---- */
 function lookupBarcode(number){
   app.innerHTML=mastHTML+'<div class="loading"><div class="l1">Looking up product\u2026</div><div class="l2">Barcode '+esc(number)+'</div><div class="dots"></div></div>';
   window.scrollTo(0,0);
   fetch("https://world.openfoodfacts.org/api/v0/product/"+encodeURIComponent(number)+".json")
     .then(function(res){ return res.json(); })
     .then(function(data){
-      if(data && data.status===1 && data.product){ renderProduct(number,data.product); }
-      else { renderNotFound(number); }
+      if(data && data.status===1 && data.product){
+        var p=data.product;
+        var name=p.product_name||p.product_name_en||p.generic_name_en||p.generic_name||"";
+        var brand=(p.brands||"").split(",")[0].trim();
+        var query=name||brand;
+        if(!query){ scanMessage("Product unnamed","This barcode is in the database but has no name recorded. Try another item."); return; }
+        if(brand && name && name.toLowerCase().indexOf(brand.toLowerCase())===-1) query=brand+" "+name;
+        appraiseScanned(query, name||query);
+      } else {
+        scanMessage("Not in the database","This barcode isn\u2019t in the grocery database. Veya covers food & groceries first \u2014 try a supermarket food item.");
+      }
     })
-    .catch(function(){ renderLookupError(number); });
+    .catch(function(){ scanMessage("Couldn\u2019t reach the database","Check your internet connection and try again."); });
 }
-function renderProduct(number,p){
-  var name=p.product_name||p.product_name_en||p.generic_name_en||p.generic_name||"Unnamed product";
-  var brand=(p.brands||"").split(",")[0].trim();
-  var size=(p.quantity||"").trim();
-  var img=p.image_front_url||p.image_url||p.image_front_small_url||"";
-  var sub=[]; if(brand)sub.push(brand); if(size)sub.push(size);
-  var html=mastHTML+'<div class="card" style="text-align:center">';
-  if(img) html+='<img class="prod-img" src="'+esc(img)+'" alt="" onerror="this.style.display=\'none\'" />';
-  html+='<div class="found-note">\u2713 Found in the grocery database</div>'+
-    '<div class="pname">'+esc(name)+'</div>'+
-    (sub.length?'<div class="pcat">'+esc(sub.join("  \u00b7  "))+'</div>':'')+
-    '<hr class="hair" />'+
-    '<div class="lbl">Worth-it appraisal</div>'+
-    '<div class="appraisal-next">Arrives in the next build step, when the value engine is connected.</div>'+
-    '<hr class="hair" />'+
-    '<div class="barcode-num"><small>Barcode</small>'+esc(number)+'</div>'+
-    '</div>'+
-    '<div class="scan-actions"><button class="btn-primary" onclick="renderScan()">Scan again</button>'+
-    '<button class="btn-ghost" onclick="go(\'home\')">Home</button></div>';
-  app.innerHTML=html; window.scrollTo(0,0);
-}
-function renderNotFound(number){
-  app.innerHTML=mastHTML+
-    '<div class="card" style="text-align:center">'+
-    '<div class="qmark">?</div>'+
-    '<div class="lbl">Not in the database</div>'+
-    '<div class="barcode-num" style="font-size:22px;margin-top:10px">'+esc(number)+'</div>'+
-    '<div class="appraisal-next" style="margin-top:14px">This barcode isn\u2019t in the grocery database. Veya covers food &amp; groceries first \u2014 books, gadgets and other items come later. Try a supermarket food item.</div>'+
-    '</div>'+
-    '<div class="scan-actions"><button class="btn-primary" onclick="renderScan()">Scan again</button>'+
-    '<button class="btn-ghost" onclick="go(\'home\')">Home</button></div>';
+function appraiseScanned(query, displayName){
+  app.innerHTML=mastHTML+'<div class="loading"><div class="l1">Appraising\u2026</div><div class="l2">'+esc(displayName)+'</div><div class="dots"></div></div>';
   window.scrollTo(0,0);
-}
-function renderLookupError(number){
-  app.innerHTML=mastHTML+
-    '<div class="card" style="text-align:center">'+
-    '<div class="qmark" style="border-color:var(--oxblood);color:var(--oxblood)">!</div>'+
-    '<div class="lbl">Couldn\u2019t reach the database</div>'+
-    '<div class="appraisal-next" style="margin-top:14px">Check your internet connection and try again.</div>'+
-    '</div>'+
-    '<div class="scan-actions"><button class="btn-primary" onclick="renderScan()">Try again</button>'+
-    '<button class="btn-ghost" onclick="go(\'home\')">Home</button></div>';
-  window.scrollTo(0,0);
+  callEngine(query,"").then(function(r){
+    if(!r.alternatives||!r.alternatives.length){ scanMessage("Couldn\u2019t appraise", (r.summary||"Veya couldn\u2019t weigh this one up. Try another item.")); return; }
+    r.source="live \u00b7 ai";
+    renderResult(r,true);
+  }).catch(function(){ scanMessage("Engine unavailable","Veya couldn\u2019t reach the value engine just now. Check your connection and try again."); });
 }
 
-/* ---- Name appraisal (5 examples) ---- */
-function renderLoading(){ app.innerHTML=mastHTML+'<div class="loading"><div class="l1">Appraising\u2026</div><div class="l2">Checking prices \u00b7 finding cheaper</div><div class="dots"></div></div>'; }
-function renderResult(r){
+/* ---- Name appraisal (live) ---- */
+function renderLoading(){ app.innerHTML=mastHTML+'<div class="loading"><div class="l1">Appraising\u2026</div><div class="l2">Weighing value \u00b7 finding cheaper</div><div class="dots"></div></div>'; }
+function renderResult(r, fromScan){
   var st=stateFor(r.worthScore);
   var html=mastHTML+'<div class="card">'+
     '<div class="card-head"><div class="m">VEYA</div><div class="k">Appraisal</div></div><hr class="hair" />'+
@@ -342,17 +315,26 @@ function renderResult(r){
     }
   }
   html+=(r.source?'<div class="src">'+esc(r.source)+'</div>':'')+'<hr class="hair" /><div class="card-foot">VEYA</div></div>'+
-    '<button class="again" onclick="go(\'home\')">Appraise another</button>';
-  app.innerHTML=html;
+    (fromScan
+      ? '<div class="scan-actions"><button class="btn-primary" onclick="renderScan()">Scan again</button><button class="btn-ghost" onclick="go(\'home\')">Home</button></div>'
+      : '<button class="again" onclick="go(\'home\')">Appraise another</button>');
+  app.innerHTML=html; window.scrollTo(0,0);
 }
 function go(screen){ if(screen==="home")renderHome(); else if(screen==="scan")renderScan(); window.scrollTo(0,0); }
 function appraise(name){
-  var match=lookup(name);
-  if(!match){ renderHome("Live search of any product arrives in a later build step. For now, try one of the five below."); window.scrollTo(0,0); return; }
+  var q=(name||"").trim(); if(!q)return;
   renderLoading(); window.scrollTo(0,0);
-  var payPrice=(priceVal&&priceVal.trim())?("\u00a3"+priceVal.trim()):null;
-  var data={}; for(var k in match)data[k]=match[k]; data.userPrice=payPrice; data.source="offline example";
-  setTimeout(function(){ renderResult(data); window.scrollTo(0,0); },700);
+  var payPrice=(priceVal&&priceVal.trim())?priceVal.trim():"";
+  callEngine(q,payPrice).then(function(r){
+    if(!r.alternatives||!r.alternatives.length){ renderHome(r.summary||"Veya couldn\u2019t identify that product. Try being more specific."); window.scrollTo(0,0); return; }
+    if(payPrice) r.userPrice="\u00a3"+payPrice;
+    r.source="live \u00b7 ai";
+    renderResult(r,false);
+  }).catch(function(){
+    var local=lookupLocal(q);
+    if(local){ var d={};for(var k in local)d[k]=local[k]; if(payPrice)d.userPrice="\u00a3"+payPrice; d.source="offline example"; renderResult(d,false); }
+    else { renderHome("Veya couldn\u2019t reach the value engine just now. Check your connection, then try again."); window.scrollTo(0,0); }
+  });
 }
 function doSearch(){ appraise(productVal); }
 
