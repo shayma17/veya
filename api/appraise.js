@@ -1,7 +1,7 @@
-// Veya value engine — runs on Vercel's server, holds your secret key safely.
-// The app never sees the key; it just asks this file for a verdict.
+// Veya value engine — DIAGNOSTIC VERSION
+// Visit /api/appraise in a browser to run a self-test and see the real error.
+// Once everything works, we'll swap this for the clean version.
 
-// If Google ever renames the free model, THIS is the one line to change:
 const MODEL = "gemini-2.5-flash";
 
 const SYSTEM = `You are Veya, a discreet, exacting value-for-money product analyst with refined, understated British prose. Given a product name (and optionally the price the user would pay), judge whether it is worth the money and suggest cheaper alternatives that do the same job as well or better.
@@ -16,12 +16,87 @@ Respond ONLY as JSON in exactly this shape, nothing else:
 "verdict" is either "same" or "better". Provide 2 to 4 alternatives, best value first. If you cannot identify the product, set worthScore to 0, briefly explain in summary, and return an empty alternatives array.`;
 
 export default async function handler(req, res) {
+  const key = process.env.GEMINI_API_KEY;
+
+  // ---- SELF-TEST: just visit /api/appraise in a browser ----
+  if (req.method === "GET") {
+    const report = {
+      step1_keyFound: !!key,
+      step1_keyLength: key ? key.length : 0,
+      step1_keyStartsWith: key ? key.slice(0, 6) + "..." : "(none)",
+      step2_modelBeingUsed: MODEL
+    };
+
+    if (!key) {
+      report.verdict = "PROBLEM: No key found. Check the name is exactly GEMINI_API_KEY in Vercel, then REDEPLOY.";
+      res.status(200).json(report);
+      return;
+    }
+
+    try {
+      const listRes = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models?key=" + key
+      );
+      const listData = await listRes.json();
+
+      if (!listRes.ok) {
+        report.step3_googleStatus = listRes.status;
+        report.step3_googleSaid = (listData && listData.error && listData.error.message) || "unknown error";
+        report.verdict = "PROBLEM: Google rejected the key. See step3_googleSaid above.";
+        res.status(200).json(report);
+        return;
+      }
+
+      const usable = (listData.models || [])
+        .filter(function (m) { return (m.supportedGenerationMethods || []).indexOf("generateContent") !== -1; })
+        .map(function (m) { return m.name.replace("models/", ""); });
+
+      report.step3_keyWorks = true;
+      report.step3_modelsAvailableToYou = usable;
+      report.step4_yourModelIsAvailable = usable.indexOf(MODEL) !== -1;
+
+      if (!report.step4_yourModelIsAvailable) {
+        report.verdict =
+          "PROBLEM: The model '" + MODEL + "' isn't in your list. Send Claude the models listed above and he'll switch it.";
+        res.status(200).json(report);
+        return;
+      }
+
+      const testRes = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent?key=" + key,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts: [{ text: "Say OK" }] }] })
+        }
+      );
+      const testData = await testRes.json();
+
+      if (!testRes.ok) {
+        report.step5_googleSaid = (testData && testData.error && testData.error.message) || "unknown";
+        report.verdict = "PROBLEM: Model call failed. See step5_googleSaid above.";
+        res.status(200).json(report);
+        return;
+      }
+
+      report.step5_testGeneration = "SUCCESS";
+      report.verdict = "ALL GOOD — the engine and key work. Veya should be appraising now.";
+      res.status(200).json(report);
+      return;
+    } catch (e) {
+      report.step3_networkError = String(e && e.message ? e.message : e);
+      report.verdict = "PROBLEM: Couldn't reach Google at all.";
+      res.status(200).json(report);
+      return;
+    }
+  }
+
+  // ---- NORMAL APPRAISAL ----
   if (req.method !== "POST") {
     res.status(405).json({ error: "Method not allowed" });
     return;
   }
 
-  const key = process.env.GEMINI_API_KEY;
   if (!key) {
     res.status(500).json({ error: "Missing GEMINI_API_KEY in Vercel settings." });
     return;
@@ -41,26 +116,25 @@ export default async function handler(req, res) {
   const userText = "Product: " + product + (price ? "\nPrice I'd pay: " + price : "");
 
   try {
-    const url =
-      "https://generativelanguage.googleapis.com/v1beta/models/" +
-      MODEL + ":generateContent?key=" + key;
-
-    const r = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM }] },
-        contents: [{ parts: [{ text: userText }] }],
-        generationConfig: { temperature: 0.4, responseMimeType: "application/json" }
-      })
-    });
+    const r = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent?key=" + key,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: SYSTEM }] },
+          contents: [{ parts: [{ text: userText }] }],
+          generationConfig: { temperature: 0.4, responseMimeType: "application/json" }
+        })
+      }
+    );
 
     const data = await r.json();
 
     if (!r.ok) {
       res.status(502).json({
         error: "AI service error",
-        detail: (data && data.error && data.error.message) || ""
+        googleSaid: (data && data.error && data.error.message) || "unknown"
       });
       return;
     }
@@ -73,12 +147,12 @@ export default async function handler(req, res) {
       const a = text.indexOf("{"), b = text.lastIndexOf("}");
       parsed = JSON.parse(text.slice(a, b + 1));
     } catch (e) {
-      res.status(502).json({ error: "Couldn't read the AI response" });
+      res.status(502).json({ error: "Couldn't read the AI response", raw: text.slice(0, 200) });
       return;
     }
 
     res.status(200).json(parsed);
   } catch (e) {
-    res.status(502).json({ error: "Couldn't reach the AI service" });
+    res.status(502).json({ error: "Couldn't reach the AI service", detail: String(e && e.message ? e.message : e) });
   }
 }
