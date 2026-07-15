@@ -2,7 +2,7 @@
 // Visit /api/appraise in a browser to run a self-test and see the real error.
 // Once everything works, we'll swap this for the clean version.
 
-const MODEL = "gemini-2.5-flash";
+const MODEL = "gemini-flash-latest";
 
 const SYSTEM = `You are Veya, a discreet, exacting value-for-money product analyst with refined, understated British prose. Given a product name (and optionally the price the user would pay), judge whether it is worth the money and suggest cheaper alternatives that do the same job as well or better.
 
