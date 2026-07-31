@@ -15,7 +15,7 @@
   --ink:#2a2418; --ink2:#4a4230;
   --stone:#8a8072; --stone2:#a29885;
   --hair:#d7ceba; --champagne:#a98545;
-  --sage:#5c7360; --bronze:#8c6c34; --oxblood:#93463e;
+  --sage:#4e9a5f; --bronze:#e0913a; --oxblood:#cf4c40;
   --serif:'Cormorant Garamond',Georgia,serif;
   --sans:'Jost',system-ui,-apple-system,sans-serif;
   --dark:#1a1712;
@@ -105,8 +105,8 @@ body{font-family:var(--sans);font-weight:300;color:var(--ink);min-height:100vh;-
 .score{text-align:right;white-space:nowrap}
 .score b{font-family:var(--serif);font-weight:500;font-size:40px;line-height:.9}
 .score span{font-family:var(--serif);font-size:19px;color:var(--stone)}
-.meter{height:1.5px;background:var(--hair);margin:16px 0 2px;overflow:hidden}
-.meter i{display:block;height:100%;transition:width .7s cubic-bezier(.2,.7,.2,1)}
+.meter{height:5px;background:var(--hair);margin:16px 0 2px;overflow:hidden;border-radius:3px}
+.meter i{display:block;height:100%;border-radius:3px;transition:width .7s cubic-bezier(.2,.7,.2,1)}
 .row{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0}
 .row .rk{font-family:var(--sans);font-weight:400;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--stone)}
 .row .rv{font-family:var(--serif);font-weight:500;font-size:19px;color:var(--ink)}
@@ -133,7 +133,7 @@ body{font-family:var(--sans);font-weight:300;color:var(--ink);min-height:100vh;-
 </head>
 <body>
 <div id="app"></div>
-<input id="photoInput" type="file" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(this.files&&this.files[0]); this.value='';" />
+<input id="photoInput" type="file" accept="image/*" style="display:none" onchange="handlePhoto(this.files&&this.files[0]); this.value='';" />
 
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
@@ -208,8 +208,8 @@ function renderHome(note){
   for(var e=0;e<EXAMPLES.length;e++){chips+='<b onclick="appraise(\''+EXAMPLES[e].replace(/'/g,"\\'")+'\')">'+esc(EXAMPLES[e])+'</b>';if(e<EXAMPLES.length-1)chips+="  \u00b7  ";}
   app.innerHTML=mastHTML+
     '<button class="scan-btn" onclick="go(\'scan\')"><div class="barcode">'+barsHTML+'</div><div class="t">Scan a barcode</div></button>'+
-    '<button class="snap-btn" onclick="triggerPhoto()">Snap a photo instead</button>'+
-    '<div class="snap-hint">No barcode? Photograph the product.</div>'+
+    '<button class="snap-btn" onclick="triggerPhoto()">Snap or upload a photo</button>'+
+    '<div class="snap-hint">No barcode? Photograph the product or choose one from your library.</div>'+
     '<div class="divider"><span></span><em>or</em><span></span></div>'+
     '<label class="field-label">Appraise by name</label>'+
     '<input id="q" class="tin" placeholder="Any product in the world\u2026" value="'+esc(productVal)+'" oninput="productVal=this.value" onkeydown="if(event.key===\'Enter\')doSearch()" />'+
@@ -217,8 +217,7 @@ function renderHome(note){
     '<input id="p" class="tin" placeholder="0.00" inputmode="decimal" value="'+esc(priceVal)+'" oninput="priceVal=this.value" onkeydown="if(event.key===\'Enter\')doSearch()" /></div>'+
     '<button class="appraise" onclick="doSearch()">Appraise</button>'+
     (note?'<div class="note">'+esc(note)+'</div>':'')+
-    '<div class="subnote">Scan, snap or type \u2014 any product.</div>'+
-    '<div class="tryline">'+chips+'</div>';
+    '<div class="subnote">Scan, snap or type \u2014 any product.</div>';
 }
 
 /* ---- Engine calls ---- */
