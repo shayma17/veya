@@ -36,6 +36,9 @@ body{font-family:var(--sans);font-weight:300;color:var(--ink);min-height:100vh;-
 .barcode{display:flex;align-items:flex-end;gap:2px;height:34px}
 .barcode i{display:block;width:2px;background:var(--ink);opacity:.85}
 .scan-btn .t{font-family:var(--sans);font-weight:400;font-size:12px;letter-spacing:.26em;text-transform:uppercase}
+.snap-btn{width:100%;margin-top:10px;background:transparent;color:var(--ink2);cursor:pointer;border:1px solid var(--hair);border-radius:2px;padding:15px;font-family:var(--sans);font-weight:400;font-size:11px;letter-spacing:.22em;text-transform:uppercase;transition:border-color .25s,color .2s}
+.snap-btn:hover{border-color:var(--champagne);color:var(--ink)}
+.snap-hint{text-align:center;margin-top:8px;font-family:var(--serif);font-style:italic;font-size:13.5px;color:var(--stone2)}
 
 .divider{display:flex;align-items:center;gap:14px;margin:22px 2px}
 .divider span{flex:1;height:1px;background:var(--hair)}
@@ -84,7 +87,7 @@ body{font-family:var(--sans);font-weight:300;color:var(--ink);min-height:100vh;-
 
 .loading{margin-top:60px;text-align:center}
 .loading .l1{font-family:var(--serif);font-style:italic;font-size:22px;color:var(--ink2)}
-.loading .l2{margin-top:8px;font-family:var(--sans);font-weight:400;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--stone)}
+.loading .l2{margin-top:10px;font-family:var(--sans);font-weight:400;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--stone);transition:opacity .3s}
 .loading .dots{width:30px;height:1px;background:var(--champagne);margin:20px auto 0;animation:pulse 1.3s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:.25;width:20px}50%{opacity:1;width:44px}}
 
@@ -130,12 +133,12 @@ body{font-family:var(--sans);font-weight:300;color:var(--ink);min-height:100vh;-
 </head>
 <body>
 <div id="app"></div>
+<input id="photoInput" type="file" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(this.files&&this.files[0]); this.value='';" />
 
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
-/* ---- Veya — Phase 4 (live AI verdict via /api/appraise) ---- */
+/* ---- Veya — text + barcode + photo ---- */
 
-/* Offline fallback set — used only if the live engine can't be reached. */
 var DB = [
   { keys:["nurofen","ibuprofen"], product:"Nurofen", category:"Painkiller \u00b7 Ibuprofen",
     worthScore:14, typicalPrice:"\u00a32.50 / 16",
@@ -168,7 +171,7 @@ var DB = [
 var EXAMPLES = ["Nurofen","Evian","Heinz Baked Beans","AirPods Max","Dyson Supersonic"];
 
 var productVal = "", priceVal = "";
-var html5Qrcode = null, scanHandled = false;
+var html5Qrcode = null, scanHandled = false, loadTimer = null;
 var app = document.getElementById("app");
 
 function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
@@ -182,13 +185,31 @@ function lookupLocal(input){
 var mastHTML='<div class="mast"><div class="mark">VEYA</div><div class="rule"></div><div class="sub">Spend with intention</div></div>';
 var frameHTML='<div class="frame"><span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span></div>';
 
+function stopLoadingCycle(){ if(loadTimer){ clearInterval(loadTimer); loadTimer=null; } }
+function showLoading(title){
+  stopLoadingCycle();
+  app.innerHTML=mastHTML+'<div class="loading"><div class="l1">'+esc(title)+'</div>'+
+    '<div class="l2" id="loadmsg">Weighing value</div><div class="dots"></div></div>';
+  window.scrollTo(0,0);
+  var msgs=["Weighing value","Checking typical prices","Finding cheaper options","Comparing the field","Almost there"];
+  var i=0;
+  loadTimer=setInterval(function(){
+    i=(i+1)%msgs.length;
+    var el=document.getElementById("loadmsg");
+    if(el){ el.style.opacity="0"; setTimeout(function(){ if(el){ el.textContent=msgs[i]; el.style.opacity="1"; } },200); }
+  },1600);
+}
+
 function renderHome(note){
+  stopLoadingCycle();
   var bars=[7,3,5,2,8,4,3,6,2,7,5,3,8,2,4,6,3,7],barsHTML="";
   for(var i=0;i<bars.length;i++){barsHTML+='<i style="height:'+(bars[i]*4)+'px"></i>';}
   var chips="";
   for(var e=0;e<EXAMPLES.length;e++){chips+='<b onclick="appraise(\''+EXAMPLES[e].replace(/'/g,"\\'")+'\')">'+esc(EXAMPLES[e])+'</b>';if(e<EXAMPLES.length-1)chips+="  \u00b7  ";}
   app.innerHTML=mastHTML+
     '<button class="scan-btn" onclick="go(\'scan\')"><div class="barcode">'+barsHTML+'</div><div class="t">Scan a barcode</div></button>'+
+    '<button class="snap-btn" onclick="triggerPhoto()">Snap a photo instead</button>'+
+    '<div class="snap-hint">No barcode? Photograph the product.</div>'+
     '<div class="divider"><span></span><em>or</em><span></span></div>'+
     '<label class="field-label">Appraise by name</label>'+
     '<input id="q" class="tin" placeholder="Any product in the world\u2026" value="'+esc(productVal)+'" oninput="productVal=this.value" onkeydown="if(event.key===\'Enter\')doSearch()" />'+
@@ -196,16 +217,16 @@ function renderHome(note){
     '<input id="p" class="tin" placeholder="0.00" inputmode="decimal" value="'+esc(priceVal)+'" oninput="priceVal=this.value" onkeydown="if(event.key===\'Enter\')doSearch()" /></div>'+
     '<button class="appraise" onclick="doSearch()">Appraise</button>'+
     (note?'<div class="note">'+esc(note)+'</div>':'')+
-    '<div class="subnote">Type any product, or scan a barcode.</div>'+
+    '<div class="subnote">Scan, snap or type \u2014 any product.</div>'+
     '<div class="tryline">'+chips+'</div>';
 }
 
-/* ---- The live engine call ---- */
-function callEngine(product, price){
+/* ---- Engine calls ---- */
+function callEngine(payload){
   return fetch("/api/appraise",{
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({product:product, price:price||""})
+    body:JSON.stringify(payload)
   }).then(function(res){
     return res.json().then(function(data){
       if(!res.ok) throw new Error((data&&data.error)||"engine error");
@@ -214,8 +235,42 @@ function callEngine(product, price){
   });
 }
 
+/* ---- Photo capture (works for anything, incl. non-food & no barcode) ---- */
+function triggerPhoto(){ var el=document.getElementById("photoInput"); if(el) el.click(); }
+function handlePhoto(file){
+  if(!file) return;
+  showLoading("Reading the photo\u2026");
+  var reader=new FileReader();
+  reader.onerror=function(){ scanMessage("Couldn\u2019t read that","The photo didn\u2019t load. Try snapping again."); };
+  reader.onload=function(ev){
+    var img=new Image();
+    img.onerror=function(){ scanMessage("Couldn\u2019t read that","The photo didn\u2019t load. Try snapping again."); };
+    img.onload=function(){
+      var max=1024, w=img.width, h=img.height;
+      if(w>h && w>max){ h=Math.round(h*max/w); w=max; }
+      else if(h>=w && h>max){ w=Math.round(w*max/h); h=max; }
+      var canvas=document.createElement("canvas");
+      canvas.width=w; canvas.height=h;
+      canvas.getContext("2d").drawImage(img,0,0,w,h);
+      var base64;
+      try{ base64=canvas.toDataURL("image/jpeg",0.75).split(",")[1]; }
+      catch(e){ scanMessage("Couldn\u2019t read that","That image didn\u2019t work. Try snapping again."); return; }
+      var payPrice=(priceVal&&priceVal.trim())?priceVal.trim():"";
+      callEngine({ image:base64, mimeType:"image/jpeg", price:payPrice }).then(function(r){
+        if(!r.alternatives||!r.alternatives.length){ scanMessage("Couldn\u2019t identify", (r.summary||"Veya couldn\u2019t make out the product. Try a clearer, closer photo.")); return; }
+        if(payPrice) r.userPrice="\u00a3"+payPrice;
+        r.source="live \u00b7 photo";
+        renderResult(r,"photo");
+      }).catch(function(){ scanMessage("Veya is busy","The engine is under heavy load right now. Give it a moment and try again."); });
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
 /* ---- Barcode camera ---- */
 function renderScan(){
+  stopLoadingCycle();
   scanHandled=false;
   app.innerHTML=mastHTML+
     '<div class="viewer"><div id="reader"></div>'+frameHTML+'<div class="scanline"></div></div>'+
@@ -226,17 +281,26 @@ function renderScan(){
 }
 function startScanner(){
   if(typeof Html5Qrcode==="undefined"){ camMessage("The scanner couldn\u2019t load. Check your connection, then tap Try again.",true); return; }
-  try{ html5Qrcode=new Html5Qrcode("reader",{verbose:false}); }
+  var ctorConfig={ verbose:false, experimentalFeatures:{ useBarCodeDetectorIfSupported:true } };
+  if(typeof Html5QrcodeSupportedFormats!=="undefined"){
+    ctorConfig.formatsToSupport=[
+      Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8,
+      Html5QrcodeSupportedFormats.UPC_A, Html5QrcodeSupportedFormats.UPC_E,
+      Html5QrcodeSupportedFormats.CODE_128, Html5QrcodeSupportedFormats.CODE_39
+    ];
+  }
+  try{ html5Qrcode=new Html5Qrcode("reader",ctorConfig); }
   catch(e){ camMessage("Couldn\u2019t start the camera. Tap Try again.",true); return; }
   html5Qrcode.start(
-    { facingMode:"environment" }, { fps:10 },
+    { facingMode:"environment" }, { fps:20 },
     function(decodedText){ if(scanHandled)return; scanHandled=true; stopScanner(function(){ lookupBarcode(decodedText); }); },
-    function(){ /* per-frame no-match: ignore */ }
+    function(){ }
   ).catch(function(){
     camMessage("Veya needs camera access. Allow the camera when your browser asks, then tap Try again.",true);
   });
 }
 function camMessage(msg,showRetry){
+  stopLoadingCycle();
   app.innerHTML=mastHTML+
     '<div class="viewer"><div class="cam-msg"><p>'+esc(msg)+'</p></div>'+frameHTML+'</div>'+
     '<div class="scan-actions">'+(showRetry?'<button class="btn-primary" onclick="renderScan()">Try again</button>':'')+
@@ -250,16 +314,17 @@ function stopScanner(cb){
 }
 function cancelScan(){ stopScanner(function(){ go("home"); }); }
 function scanMessage(title,msg){
+  stopLoadingCycle();
   app.innerHTML=mastHTML+
     '<div class="card" style="text-align:center"><div class="qmark">?</div><div class="lbl">'+esc(title)+'</div>'+
     '<div class="msg-note">'+esc(msg)+'</div></div>'+
-    '<div class="scan-actions"><button class="btn-primary" onclick="renderScan()">Scan again</button>'+
-    '<button class="btn-ghost" onclick="go(\'home\')">Home</button></div>';
+    '<div class="scan-actions"><button class="btn-primary" onclick="go(\'home\')">Home</button></div>';
   window.scrollTo(0,0);
 }
 
 /* ---- Barcode -> product name (Open Food Facts) -> live verdict ---- */
 function lookupBarcode(number){
+  stopLoadingCycle();
   app.innerHTML=mastHTML+'<div class="loading"><div class="l1">Looking up product\u2026</div><div class="l2">Barcode '+esc(number)+'</div><div class="dots"></div></div>';
   window.scrollTo(0,0);
   fetch("https://world.openfoodfacts.org/api/v0/product/"+encodeURIComponent(number)+".json")
@@ -270,28 +335,28 @@ function lookupBarcode(number){
         var name=p.product_name||p.product_name_en||p.generic_name_en||p.generic_name||"";
         var brand=(p.brands||"").split(",")[0].trim();
         var query=name||brand;
-        if(!query){ scanMessage("Product unnamed","This barcode is in the database but has no name recorded. Try another item."); return; }
+        if(!query){ scanMessage("Product unnamed","This barcode is in the database but has no name recorded. Try the photo option instead."); return; }
         if(brand && name && name.toLowerCase().indexOf(brand.toLowerCase())===-1) query=brand+" "+name;
         appraiseScanned(query, name||query);
       } else {
-        scanMessage("Not in the database","This barcode isn\u2019t in the grocery database. Veya covers food & groceries first \u2014 try a supermarket food item.");
+        scanMessage("Not in the food database","No food match for that barcode. For gadgets and other items, use \u201cSnap a photo\u201d on the home screen instead.");
       }
     })
     .catch(function(){ scanMessage("Couldn\u2019t reach the database","Check your internet connection and try again."); });
 }
 function appraiseScanned(query, displayName){
-  app.innerHTML=mastHTML+'<div class="loading"><div class="l1">Appraising\u2026</div><div class="l2">'+esc(displayName)+'</div><div class="dots"></div></div>';
-  window.scrollTo(0,0);
-  callEngine(query,"").then(function(r){
+  showLoading("Appraising \u2014 "+displayName);
+  callEngine({ product:query, price:"" }).then(function(r){
     if(!r.alternatives||!r.alternatives.length){ scanMessage("Couldn\u2019t appraise", (r.summary||"Veya couldn\u2019t weigh this one up. Try another item.")); return; }
     r.source="live \u00b7 ai";
-    renderResult(r,true);
-  }).catch(function(){ scanMessage("Engine unavailable","Veya couldn\u2019t reach the value engine just now. Check your connection and try again."); });
+    renderResult(r,"scan");
+  }).catch(function(){ scanMessage("Veya is busy","The value engine is under heavy load right now. Give it a moment and scan again."); });
 }
 
 /* ---- Name appraisal (live) ---- */
-function renderLoading(){ app.innerHTML=mastHTML+'<div class="loading"><div class="l1">Appraising\u2026</div><div class="l2">Weighing value \u00b7 finding cheaper</div><div class="dots"></div></div>'; }
-function renderResult(r, fromScan){
+function renderLoading(){ showLoading("Appraising\u2026"); }
+function renderResult(r, mode){
+  stopLoadingCycle();
   var st=stateFor(r.worthScore);
   var html=mastHTML+'<div class="card">'+
     '<div class="card-head"><div class="m">VEYA</div><div class="k">Appraisal</div></div><hr class="hair" />'+
@@ -314,26 +379,27 @@ function renderResult(r, fromScan){
         (alt.savings?'<span class="alt-saves">Saves '+esc(alt.savings)+'</span>':'')+'</div><div class="alt-why">'+esc(alt.why)+'</div></div>';
     }
   }
-  html+=(r.source?'<div class="src">'+esc(r.source)+'</div>':'')+'<hr class="hair" /><div class="card-foot">VEYA</div></div>'+
-    (fromScan
-      ? '<div class="scan-actions"><button class="btn-primary" onclick="renderScan()">Scan again</button><button class="btn-ghost" onclick="go(\'home\')">Home</button></div>'
-      : '<button class="again" onclick="go(\'home\')">Appraise another</button>');
+  var footer;
+  if(mode==="scan") footer='<div class="scan-actions"><button class="btn-primary" onclick="renderScan()">Scan again</button><button class="btn-ghost" onclick="go(\'home\')">Home</button></div>';
+  else if(mode==="photo") footer='<div class="scan-actions"><button class="btn-primary" onclick="triggerPhoto()">Snap again</button><button class="btn-ghost" onclick="go(\'home\')">Home</button></div>';
+  else footer='<button class="again" onclick="go(\'home\')">Appraise another</button>';
+  html+=(r.source?'<div class="src">'+esc(r.source)+'</div>':'')+'<hr class="hair" /><div class="card-foot">VEYA</div></div>'+footer;
   app.innerHTML=html; window.scrollTo(0,0);
 }
-function go(screen){ if(screen==="home")renderHome(); else if(screen==="scan")renderScan(); window.scrollTo(0,0); }
+function go(screen){ stopLoadingCycle(); if(screen==="home")renderHome(); else if(screen==="scan")renderScan(); window.scrollTo(0,0); }
 function appraise(name){
   var q=(name||"").trim(); if(!q)return;
-  renderLoading(); window.scrollTo(0,0);
+  renderLoading();
   var payPrice=(priceVal&&priceVal.trim())?priceVal.trim():"";
-  callEngine(q,payPrice).then(function(r){
-    if(!r.alternatives||!r.alternatives.length){ renderHome(r.summary||"Veya couldn\u2019t identify that product. Try being more specific."); window.scrollTo(0,0); return; }
+  callEngine({ product:q, price:payPrice }).then(function(r){
+    if(!r.alternatives||!r.alternatives.length){ renderHome(r.summary||"Veya couldn\u2019t identify that product. Try being more specific."); return; }
     if(payPrice) r.userPrice="\u00a3"+payPrice;
     r.source="live \u00b7 ai";
-    renderResult(r,false);
+    renderResult(r,"name");
   }).catch(function(){
     var local=lookupLocal(q);
-    if(local){ var d={};for(var k in local)d[k]=local[k]; if(payPrice)d.userPrice="\u00a3"+payPrice; d.source="offline example"; renderResult(d,false); }
-    else { renderHome("Veya couldn\u2019t reach the value engine just now. Check your connection, then try again."); window.scrollTo(0,0); }
+    if(local){ var d={};for(var k in local)d[k]=local[k]; if(payPrice)d.userPrice="\u00a3"+payPrice; d.source="offline example"; renderResult(d,"name"); }
+    else { renderHome("Veya is busy just now. Give it a moment, then try again."); }
   });
 }
 function doSearch(){ appraise(productVal); }
