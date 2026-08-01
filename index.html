@@ -15,7 +15,7 @@
   --ink:#2a2418; --ink2:#4a4230;
   --stone:#8a8072; --stone2:#a29885;
   --hair:#d7ceba; --champagne:#a98545;
-  --sage:#4e9a5f; --bronze:#e0913a; --oxblood:#cf4c40;
+  --green:#2f8f57; --amber:#db8a2b; --red:#cf463b;
   --serif:'Cormorant Garamond',Georgia,serif;
   --sans:'Jost',system-ui,-apple-system,sans-serif;
   --dark:#1a1712;
@@ -23,8 +23,11 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{background:var(--bg)}
 body{font-family:var(--sans);font-weight:300;color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
-#app{max-width:430px;margin:0 auto;padding:30px 18px 64px;min-height:100vh}
+#app{max-width:430px;margin:0 auto;padding:30px 18px 64px;min-height:100vh;position:relative}
 .lbl{font-family:var(--sans);font-weight:400;font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--stone)}
+
+.searchicon{position:absolute;top:26px;right:16px;width:40px;height:40px;border:1px solid var(--hair);border-radius:50%;background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .2s,background .2s;z-index:5}
+.searchicon:hover{border-color:var(--champagne);background:var(--card2)}
 
 .mast{text-align:center;margin:14px 0 30px}
 .mark{font-family:var(--serif);font-weight:500;font-size:38px;letter-spacing:.36em;text-indent:.36em;color:var(--ink)}
@@ -56,11 +59,23 @@ body{font-family:var(--sans);font-weight:300;color:var(--ink);min-height:100vh;-
 .appraise:hover{background:#000}
 
 .subnote{text-align:center;margin-top:16px;font-family:var(--serif);font-style:italic;font-size:14.5px;color:var(--stone);line-height:1.5}
-.tryline{text-align:center;margin-top:8px;line-height:2}
-.tryline b{font-weight:400;font-family:var(--sans);font-size:12px;letter-spacing:.02em;color:var(--ink2);cursor:pointer;border-bottom:1px solid var(--hair);padding-bottom:1px}
-.tryline b:hover{color:var(--champagne);border-color:var(--champagne)}
-
 .note{margin-top:18px;background:var(--card);border:1px solid var(--hair);border-left:2px solid var(--champagne);padding:14px 16px;font-family:var(--serif);font-style:italic;font-size:15.5px;line-height:1.55;color:var(--ink2)}
+
+/* Membership */
+.member{text-align:center;margin-top:6px}
+.member-badge{font-family:var(--sans);font-weight:400;font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--champagne)}
+.member-price{margin:12px 0 4px;font-family:var(--serif)}
+.member-price b{font-weight:600;font-size:54px;color:var(--ink);line-height:1}
+.member-price span{font-size:19px;color:var(--stone)}
+.member-tag{font-family:var(--serif);font-style:italic;font-size:16px;color:var(--stone);margin-bottom:24px}
+.perks{text-align:left;max-width:300px;margin:0 auto 24px}
+.perk{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-bottom:1px solid var(--hair)}
+.perk:last-child{border-bottom:none}
+.perk .tk{color:var(--green);font-size:15px;line-height:1.5}
+.perk .pt{font-family:var(--sans);font-weight:300;font-size:15px;color:var(--ink2);line-height:1.5}
+.ghost-link{display:block;width:100%;margin-top:12px;background:none;border:none;cursor:pointer;font-family:var(--sans);font-weight:400;font-size:12px;letter-spacing:.06em;color:var(--stone);text-decoration:underline;text-underline-offset:3px}
+.ghost-link:hover{color:var(--ink)}
+.member-note{margin-top:18px;background:var(--card);border:1px solid var(--hair);border-left:2px solid var(--green);padding:13px 15px;font-family:var(--serif);font-style:italic;font-size:15px;color:var(--ink2);line-height:1.5}
 
 .viewer{position:relative;width:100%;aspect-ratio:3/4;max-height:420px;background:var(--dark);border:1px solid var(--hair);border-radius:2px;overflow:hidden}
 #reader{position:absolute;inset:0;width:100%;height:100%}
@@ -82,7 +97,7 @@ body{font-family:var(--sans);font-weight:300;color:var(--ink);min-height:100vh;-
 .btn-primary{background:var(--ink);color:var(--bg);border:none}
 .btn-ghost{background:transparent;color:var(--stone);border:1px solid var(--hair)}
 .btn-ghost:hover{border-color:var(--stone);color:var(--ink2)}
-.qmark{width:56px;height:56px;border-radius:50%;border:1.5px solid var(--bronze);color:var(--bronze);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:30px;margin:2px auto 16px}
+.qmark{width:56px;height:56px;border-radius:50%;border:1.5px solid var(--amber);color:var(--amber);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:30px;margin:2px auto 16px}
 .msg-note{font-family:var(--sans);font-weight:300;font-size:13.5px;line-height:1.6;color:var(--stone);margin-top:12px}
 
 .loading{margin-top:60px;text-align:center}
@@ -91,22 +106,27 @@ body{font-family:var(--sans);font-weight:300;color:var(--ink);min-height:100vh;-
 .loading .dots{width:30px;height:1px;background:var(--champagne);margin:20px auto 0;animation:pulse 1.3s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:.25;width:20px}50%{opacity:1;width:44px}}
 
-.card{background:var(--card);color:var(--ink);border:1px solid var(--hair);border-radius:2px;padding:30px 26px 26px;box-shadow:0 20px 50px -34px #6b5f45}
+.card{background:var(--card);color:var(--ink);border:1px solid var(--hair);border-radius:2px;padding:28px 26px 26px;box-shadow:0 20px 50px -34px #6b5f45}
 .card-head{display:flex;justify-content:space-between;align-items:baseline}
 .card-head .m{font-family:var(--serif);font-weight:500;font-size:15px;letter-spacing:.3em;text-indent:.3em}
 .card-head .k{font-family:var(--sans);font-weight:400;font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--stone)}
 .hair{border:none;border-top:1px solid var(--hair);margin:20px 0}
 .hair.tight{margin:15px 0}
+.identity{text-align:center}
+.prod-img{display:block;width:118px;height:118px;margin:2px auto 14px;object-fit:contain;background:#fff;border:1px solid var(--hair);border-radius:4px;padding:10px}
 .pname{font-family:var(--serif);font-weight:600;font-size:28px;line-height:1.14;margin:2px 0 6px;color:var(--ink)}
 .pcat{font-family:var(--sans);font-weight:400;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--stone)}
-.verdict-block{display:flex;justify-content:space-between;align-items:flex-end;gap:16px}
-.verdict-block .vlabel{font-family:var(--sans);font-weight:400;font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--stone);margin-bottom:6px}
-.verdict-block .vword{font-family:var(--serif);font-weight:600;font-size:34px;line-height:.95}
+
+.verdict-panel{border-radius:6px;padding:17px 17px 15px;margin:4px 0 2px}
+.verdict-block{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.verdict-block .vlabel{font-family:var(--sans);font-weight:400;font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--stone);margin-bottom:8px}
+.vchip{display:inline-block;padding:8px 16px;border-radius:3px;color:#faf6ec;font-family:var(--serif);font-weight:600;font-size:22px;line-height:1}
 .score{text-align:right;white-space:nowrap}
-.score b{font-family:var(--serif);font-weight:500;font-size:40px;line-height:.9}
+.score b{font-family:var(--serif);font-weight:600;font-size:44px;line-height:.9}
 .score span{font-family:var(--serif);font-size:19px;color:var(--stone)}
-.meter{height:5px;background:var(--hair);margin:16px 0 2px;overflow:hidden;border-radius:3px}
-.meter i{display:block;height:100%;border-radius:3px;transition:width .7s cubic-bezier(.2,.7,.2,1)}
+.meter{height:6px;background:#00000012;margin:15px 0 2px;overflow:hidden;border-radius:4px}
+.meter i{display:block;height:100%;border-radius:4px;transition:width .7s cubic-bezier(.2,.7,.2,1)}
+
 .row{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0}
 .row .rk{font-family:var(--sans);font-weight:400;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--stone)}
 .row .rv{font-family:var(--serif);font-weight:500;font-size:19px;color:var(--ink)}
@@ -122,7 +142,7 @@ body{font-family:var(--sans);font-weight:300;color:var(--ink);min-height:100vh;-
 .alt-meta{display:flex;align-items:center;gap:12px;margin:6px 0 5px}
 .alt-tag{font-family:var(--sans);font-weight:400;font-size:9px;letter-spacing:.24em;text-transform:uppercase}
 .alt-tag.equal{color:var(--stone)}
-.alt-tag.superior{color:var(--sage)}
+.alt-tag.superior{color:var(--green)}
 .alt-saves{font-family:var(--sans);font-weight:400;font-size:11px;letter-spacing:.12em;color:var(--ink2)}
 .alt-why{font-family:var(--sans);font-weight:300;font-size:13px;line-height:1.5;color:var(--stone)}
 .src{margin-top:14px;font-family:var(--sans);font-weight:400;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--stone2);text-align:center}
@@ -137,7 +157,7 @@ body{font-family:var(--sans);font-weight:300;color:var(--ink);min-height:100vh;-
 
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
-/* ---- Veya — text + barcode + photo ---- */
+/* ---- Veya ---- */
 
 var DB = [
   { keys:["nurofen","ibuprofen"], product:"Nurofen", category:"Painkiller \u00b7 Ibuprofen",
@@ -157,31 +177,32 @@ var DB = [
     alternatives:[
       {name:"Tap & refillable bottle",price:"~\u00a30",savings:"\u00a30.85 a go",verdict:"same",why:"The same water, no mark-up, no plastic."},
       {name:"Own-brand still water",price:"\u00a30.17",savings:"\u00a30.68",verdict:"same",why:"The same, cheaper, should you insist."}
-    ] },
-  { keys:["heinz baked beans","heinz","baked beans","beans"], product:"Heinz Baked Beans", category:"Tinned Beans",
-    worthScore:46, typicalPrice:"\u00a31.40 / 415g",
-    priceVerdict:"A touch nicer to some \u2014 though not a pound-a-tin nicer.",
-    summary:"Heinz has genuine devotees, so this is no outright swindle. Yet own-brand beans sit close enough that most cannot tell them apart blind \u2014 at a third of the price.",
-    payingFor:["Taste (arguably)","The brand","Habit"],
-    alternatives:[
-      {name:"Own-brand baked beans",price:"\u00a30.40",savings:"\u00a31.00",verdict:"same",why:"Very close on taste, a third of the price."},
-      {name:"Value range beans",price:"\u00a30.28",savings:"\u00a31.12",verdict:"same",why:"Perfectly at home on toast."}
     ] }
 ];
-var EXAMPLES = ["Nurofen","Evian","Heinz Baked Beans","AirPods Max","Dyson Supersonic"];
 
 var productVal = "", priceVal = "";
 var html5Qrcode = null, scanHandled = false, loadTimer = null;
 var app = document.getElementById("app");
 
+var OFF_DBS = [
+  "https://world.openfoodfacts.org/api/v0/product/",
+  "https://world.openbeautyfacts.org/api/v0/product/",
+  "https://world.openproductsfacts.org/api/v0/product/"
+];
+
 function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
-function stateFor(s){ if(s>=70)return{label:"Worth it",color:"var(--sage)"}; if(s>=45)return{label:"Premium tax",color:"var(--bronze)"}; return{label:"Overpriced",color:"var(--oxblood)"}; }
+function stateFor(s){
+  if(s>=70)return{label:"Worth it",color:"#2f8f57",tint:"#e7f2ea"};
+  if(s>=45)return{label:"Premium tax",color:"#db8a2b",tint:"#f8eedd"};
+  return{label:"Overpriced",color:"#cf463b",tint:"#f8e7e5"};
+}
 function lookupLocal(input){
   var q=(input||"").trim().toLowerCase(); if(!q)return null;
   for(var i=0;i<DB.length;i++){for(var j=0;j<DB[i].keys.length;j++){var k=DB[i].keys[j];if(q.indexOf(k)!==-1||k.indexOf(q)!==-1)return DB[i];}}
   return null;
 }
 
+var searchSVG='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2a2418" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><line x1="16.4" y1="16.4" x2="21" y2="21" stroke-linecap="round"/></svg>';
 var mastHTML='<div class="mast"><div class="mark">VEYA</div><div class="rule"></div><div class="sub">Spend with intention</div></div>';
 var frameHTML='<div class="frame"><span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span></div>';
 
@@ -204,61 +225,87 @@ function renderHome(note){
   stopLoadingCycle();
   var bars=[7,3,5,2,8,4,3,6,2,7,5,3,8,2,4,6,3,7],barsHTML="";
   for(var i=0;i<bars.length;i++){barsHTML+='<i style="height:'+(bars[i]*4)+'px"></i>';}
-  var chips="";
-  for(var e=0;e<EXAMPLES.length;e++){chips+='<b onclick="appraise(\''+EXAMPLES[e].replace(/'/g,"\\'")+'\')">'+esc(EXAMPLES[e])+'</b>';if(e<EXAMPLES.length-1)chips+="  \u00b7  ";}
-  app.innerHTML=mastHTML+
+  app.innerHTML=
+    '<button class="searchicon" onclick="go(\'membership\')" aria-label="Search">'+searchSVG+'</button>'+
+    mastHTML+
     '<button class="scan-btn" onclick="go(\'scan\')"><div class="barcode">'+barsHTML+'</div><div class="t">Scan a barcode</div></button>'+
     '<button class="snap-btn" onclick="triggerPhoto()">Snap or upload a photo</button>'+
     '<div class="snap-hint">No barcode? Photograph the product or choose one from your library.</div>'+
-    '<div class="divider"><span></span><em>or</em><span></span></div>'+
+    (note?'<div class="note">'+esc(note)+'</div>':'')+
+    '<div class="subnote">Scan or snap any product.<br>Search by name is a member feature.</div>';
+}
+
+/* ---- Membership gate ---- */
+function renderMembership(msg){
+  stopLoadingCycle();
+  var perks=[
+    "Search any product by name",
+    "Use Veya offline, anywhere",
+    "Unlimited appraisals, no waiting",
+    "Priority speed at busy times"
+  ];
+  var perksHTML="";
+  for(var i=0;i<perks.length;i++){ perksHTML+='<div class="perk"><span class="tk">\u2713</span><span class="pt">'+esc(perks[i])+'</span></div>'; }
+  app.innerHTML=mastHTML+
+    '<div class="member">'+
+      '<div class="member-badge">Veya Membership</div>'+
+      '<div class="member-price"><b>\u00a310</b><span> / month</span></div>'+
+      '<div class="member-tag">Search anything. Anywhere. Instantly.</div>'+
+      '<div class="perks">'+perksHTML+'</div>'+
+      '<button class="appraise" onclick="joinMember()">Become a member</button>'+
+      (msg?'<div class="member-note">'+esc(msg)+'</div>':'')+
+      '<button class="ghost-link" onclick="go(\'search\')">Preview the search</button>'+
+      '<button class="again" onclick="go(\'home\')">Back</button>'+
+    '</div>';
+  window.scrollTo(0,0);
+}
+function joinMember(){ renderMembership("Memberships open very soon \u2014 thank you for your interest. You\u2019ll be first to know."); }
+
+/* ---- Member search (typed) ---- */
+function renderSearch(){
+  stopLoadingCycle();
+  app.innerHTML=mastHTML+
     '<label class="field-label">Appraise by name</label>'+
     '<input id="q" class="tin" placeholder="Any product in the world\u2026" value="'+esc(productVal)+'" oninput="productVal=this.value" onkeydown="if(event.key===\'Enter\')doSearch()" />'+
     '<div class="price-wrap"><label class="field-label">Price you\'d pay \u2014 optional</label><span class="cur">\u00a3</span>'+
     '<input id="p" class="tin" placeholder="0.00" inputmode="decimal" value="'+esc(priceVal)+'" oninput="priceVal=this.value" onkeydown="if(event.key===\'Enter\')doSearch()" /></div>'+
     '<button class="appraise" onclick="doSearch()">Appraise</button>'+
-    (note?'<div class="note">'+esc(note)+'</div>':'')+
-    '<div class="subnote">Scan, snap or type \u2014 any product.</div>';
+    '<button class="again" onclick="go(\'home\')">Back</button>';
+  window.scrollTo(0,0);
 }
 
-/* ---- Engine calls ---- */
+/* ---- Engine ---- */
 function callEngine(payload){
   return fetch("/api/appraise",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify(payload)
+    method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)
   }).then(function(res){
-    return res.json().then(function(data){
-      if(!res.ok) throw new Error((data&&data.error)||"engine error");
-      return data;
-    });
+    return res.json().then(function(data){ if(!res.ok) throw new Error((data&&data.error)||"engine error"); return data; });
   });
 }
 
-/* ---- Photo capture (works for anything, incl. non-food & no barcode) ---- */
+/* ---- Photo ---- */
 function triggerPhoto(){ var el=document.getElementById("photoInput"); if(el) el.click(); }
 function handlePhoto(file){
   if(!file) return;
   showLoading("Reading the photo\u2026");
   var reader=new FileReader();
-  reader.onerror=function(){ scanMessage("Couldn\u2019t read that","The photo didn\u2019t load. Try snapping again."); };
+  reader.onerror=function(){ scanMessage("Couldn\u2019t read that","The photo didn\u2019t load. Try again."); };
   reader.onload=function(ev){
     var img=new Image();
-    img.onerror=function(){ scanMessage("Couldn\u2019t read that","The photo didn\u2019t load. Try snapping again."); };
+    img.onerror=function(){ scanMessage("Couldn\u2019t read that","The photo didn\u2019t load. Try again."); };
     img.onload=function(){
-      var max=1024, w=img.width, h=img.height;
-      if(w>h && w>max){ h=Math.round(h*max/w); w=max; }
-      else if(h>=w && h>max){ w=Math.round(w*max/h); h=max; }
-      var canvas=document.createElement("canvas");
-      canvas.width=w; canvas.height=h;
+      var max=1024,w=img.width,h=img.height;
+      if(w>h && w>max){ h=Math.round(h*max/w); w=max; } else if(h>=w && h>max){ w=Math.round(w*max/h); h=max; }
+      var canvas=document.createElement("canvas"); canvas.width=w; canvas.height=h;
       canvas.getContext("2d").drawImage(img,0,0,w,h);
-      var base64;
-      try{ base64=canvas.toDataURL("image/jpeg",0.75).split(",")[1]; }
-      catch(e){ scanMessage("Couldn\u2019t read that","That image didn\u2019t work. Try snapping again."); return; }
+      var dataUrl,base64;
+      try{ dataUrl=canvas.toDataURL("image/jpeg",0.75); base64=dataUrl.split(",")[1]; }
+      catch(e){ scanMessage("Couldn\u2019t read that","That image didn\u2019t work. Try another."); return; }
       var payPrice=(priceVal&&priceVal.trim())?priceVal.trim():"";
       callEngine({ image:base64, mimeType:"image/jpeg", price:payPrice }).then(function(r){
-        if(!r.alternatives||!r.alternatives.length){ scanMessage("Couldn\u2019t identify", (r.summary||"Veya couldn\u2019t make out the product. Try a clearer, closer photo.")); return; }
+        if(!r.alternatives||!r.alternatives.length){ scanMessage("Couldn\u2019t identify",(r.summary||"Veya couldn\u2019t make out the product. Try a clearer, closer photo.")); return; }
         if(payPrice) r.userPrice="\u00a3"+payPrice;
-        r.source="live \u00b7 photo";
+        r.source="live \u00b7 photo"; r.image=dataUrl;
         renderResult(r,"photo");
       }).catch(function(){ scanMessage("Veya is busy","The engine is under heavy load right now. Give it a moment and try again."); });
     };
@@ -269,14 +316,12 @@ function handlePhoto(file){
 
 /* ---- Barcode camera ---- */
 function renderScan(){
-  stopLoadingCycle();
-  scanHandled=false;
+  stopLoadingCycle(); scanHandled=false;
   app.innerHTML=mastHTML+
     '<div class="viewer"><div id="reader"></div>'+frameHTML+'<div class="scanline"></div></div>'+
     '<div class="scan-hint">Point the camera at a barcode</div>'+
     '<div class="scan-actions"><button class="btn-ghost" onclick="cancelScan()">Cancel</button></div>';
-  window.scrollTo(0,0);
-  startScanner();
+  window.scrollTo(0,0); startScanner();
 }
 function startScanner(){
   if(typeof Html5Qrcode==="undefined"){ camMessage("The scanner couldn\u2019t load. Check your connection, then tap Try again.",true); return; }
@@ -290,13 +335,10 @@ function startScanner(){
   }
   try{ html5Qrcode=new Html5Qrcode("reader",ctorConfig); }
   catch(e){ camMessage("Couldn\u2019t start the camera. Tap Try again.",true); return; }
-  html5Qrcode.start(
-    { facingMode:"environment" }, { fps:20 },
+  html5Qrcode.start({ facingMode:"environment" },{ fps:20 },
     function(decodedText){ if(scanHandled)return; scanHandled=true; stopScanner(function(){ lookupBarcode(decodedText); }); },
-    function(){ }
-  ).catch(function(){
-    camMessage("Veya needs camera access. Allow the camera when your browser asks, then tap Try again.",true);
-  });
+    function(){}
+  ).catch(function(){ camMessage("Veya needs camera access. Allow the camera when your browser asks, then tap Try again.",true); });
 }
 function camMessage(msg,showRetry){
   stopLoadingCycle();
@@ -321,49 +363,63 @@ function scanMessage(title,msg){
   window.scrollTo(0,0);
 }
 
-/* ---- Barcode -> product name (Open Food Facts) -> live verdict ---- */
+/* ---- Barcode -> product (Food, then Beauty, then Products) -> verdict ---- */
 function lookupBarcode(number){
   stopLoadingCycle();
   app.innerHTML=mastHTML+'<div class="loading"><div class="l1">Looking up product\u2026</div><div class="l2">Barcode '+esc(number)+'</div><div class="dots"></div></div>';
   window.scrollTo(0,0);
-  fetch("https://world.openfoodfacts.org/api/v0/product/"+encodeURIComponent(number)+".json")
+  tryDbs(number,0);
+}
+function tryDbs(number,idx){
+  if(idx>=OFF_DBS.length){
+    scanMessage("Not found","No match for that barcode in the free databases yet. For gadgets and other items, use \u201cSnap or upload a photo\u201d on the home screen.");
+    return;
+  }
+  fetch(OFF_DBS[idx]+encodeURIComponent(number)+".json")
     .then(function(res){ return res.json(); })
     .then(function(data){
       if(data && data.status===1 && data.product){
         var p=data.product;
         var name=p.product_name||p.product_name_en||p.generic_name_en||p.generic_name||"";
         var brand=(p.brands||"").split(",")[0].trim();
+        var image=p.image_front_url||p.image_url||p.image_front_small_url||"";
         var query=name||brand;
-        if(!query){ scanMessage("Product unnamed","This barcode is in the database but has no name recorded. Try the photo option instead."); return; }
+        if(!query){ tryDbs(number,idx+1); return; }
         if(brand && name && name.toLowerCase().indexOf(brand.toLowerCase())===-1) query=brand+" "+name;
-        appraiseScanned(query, name||query);
+        appraiseScanned(query, name||query, image);
       } else {
-        scanMessage("Not in the food database","No food match for that barcode. For gadgets and other items, use \u201cSnap a photo\u201d on the home screen instead.");
+        tryDbs(number,idx+1);
       }
     })
-    .catch(function(){ scanMessage("Couldn\u2019t reach the database","Check your internet connection and try again."); });
+    .catch(function(){ tryDbs(number,idx+1); });
 }
-function appraiseScanned(query, displayName){
+function appraiseScanned(query, displayName, image){
   showLoading("Appraising \u2014 "+displayName);
   callEngine({ product:query, price:"" }).then(function(r){
-    if(!r.alternatives||!r.alternatives.length){ scanMessage("Couldn\u2019t appraise", (r.summary||"Veya couldn\u2019t weigh this one up. Try another item.")); return; }
-    r.source="live \u00b7 ai";
+    if(!r.alternatives||!r.alternatives.length){ scanMessage("Couldn\u2019t appraise",(r.summary||"Veya couldn\u2019t weigh this one up. Try another item.")); return; }
+    r.source="live \u00b7 ai"; if(image) r.image=image;
     renderResult(r,"scan");
   }).catch(function(){ scanMessage("Veya is busy","The value engine is under heavy load right now. Give it a moment and scan again."); });
 }
 
-/* ---- Name appraisal (live) ---- */
+/* ---- Result ---- */
 function renderLoading(){ showLoading("Appraising\u2026"); }
 function renderResult(r, mode){
   stopLoadingCycle();
   var st=stateFor(r.worthScore);
-  var html=mastHTML+'<div class="card">'+
+  var html=mastHTML+'<div class="card" style="border-top:3px solid '+st.color+'">'+
     '<div class="card-head"><div class="m">VEYA</div><div class="k">Appraisal</div></div><hr class="hair" />'+
-    '<div class="pname">'+esc(r.product)+'</div>'+(r.category?'<div class="pcat">'+esc(r.category)+'</div>':'')+'<hr class="hair" />'+
-    '<div class="verdict-block"><div><div class="vlabel">The verdict</div>'+
-    '<div class="vword" style="color:'+st.color+'">'+esc(st.label)+'</div></div>'+
-    '<div class="score"><b style="color:'+st.color+'">'+r.worthScore+'</b><span> /100</span></div></div>'+
-    '<div class="meter"><i style="width:'+Math.max(3,Math.min(100,r.worthScore))+'%;background:'+st.color+'"></i></div>'+
+    '<div class="identity">'+
+      (r.image?'<img class="prod-img" src="'+esc(r.image)+'" alt="" onerror="this.style.display=\'none\'" />':'')+
+      '<div class="pname">'+esc(r.product)+'</div>'+(r.category?'<div class="pcat">'+esc(r.category)+'</div>':'')+
+    '</div>'+
+    '<hr class="hair" />'+
+    '<div class="verdict-panel" style="background:'+st.tint+'">'+
+      '<div class="verdict-block"><div><div class="vlabel">The verdict</div>'+
+      '<div class="vchip" style="background:'+st.color+'">'+esc(st.label)+'</div></div>'+
+      '<div class="score"><b style="color:'+st.color+'">'+r.worthScore+'</b><span> /100</span></div></div>'+
+      '<div class="meter"><i style="width:'+Math.max(4,Math.min(100,r.worthScore))+'%;background:'+st.color+'"></i></div>'+
+    '</div>'+
     '<hr class="hair tight" />'+
     '<div class="row"><span class="rk">Typical price</span><span class="rv">'+esc(r.typicalPrice)+'</span></div>'+
     (r.userPrice?'<div class="row"><span class="rk">You\'d pay</span><span class="rv">'+esc(r.userPrice)+'</span></div>':'')+
@@ -381,26 +437,34 @@ function renderResult(r, mode){
   var footer;
   if(mode==="scan") footer='<div class="scan-actions"><button class="btn-primary" onclick="renderScan()">Scan again</button><button class="btn-ghost" onclick="go(\'home\')">Home</button></div>';
   else if(mode==="photo") footer='<div class="scan-actions"><button class="btn-primary" onclick="triggerPhoto()">Snap again</button><button class="btn-ghost" onclick="go(\'home\')">Home</button></div>';
-  else footer='<button class="again" onclick="go(\'home\')">Appraise another</button>';
+  else footer='<button class="again" onclick="go(\'search\')">Appraise another</button>';
   html+=(r.source?'<div class="src">'+esc(r.source)+'</div>':'')+'<hr class="hair" /><div class="card-foot">VEYA</div></div>'+footer;
   app.innerHTML=html; window.scrollTo(0,0);
 }
-function go(screen){ stopLoadingCycle(); if(screen==="home")renderHome(); else if(screen==="scan")renderScan(); window.scrollTo(0,0); }
+function go(screen){
+  stopLoadingCycle();
+  if(screen==="home")renderHome();
+  else if(screen==="scan")renderScan();
+  else if(screen==="membership")renderMembership();
+  else if(screen==="search")renderSearch();
+  window.scrollTo(0,0);
+}
 function appraise(name){
   var q=(name||"").trim(); if(!q)return;
   renderLoading();
   var payPrice=(priceVal&&priceVal.trim())?priceVal.trim():"";
   callEngine({ product:q, price:payPrice }).then(function(r){
-    if(!r.alternatives||!r.alternatives.length){ renderHome(r.summary||"Veya couldn\u2019t identify that product. Try being more specific."); return; }
+    if(!r.alternatives||!r.alternatives.length){ renderSearch(); renderResultNote(r.summary); return; }
     if(payPrice) r.userPrice="\u00a3"+payPrice;
     r.source="live \u00b7 ai";
     renderResult(r,"name");
   }).catch(function(){
     var local=lookupLocal(q);
     if(local){ var d={};for(var k in local)d[k]=local[k]; if(payPrice)d.userPrice="\u00a3"+payPrice; d.source="offline example"; renderResult(d,"name"); }
-    else { renderHome("Veya is busy just now. Give it a moment, then try again."); }
+    else { renderSearch(); }
   });
 }
+function renderResultNote(){ /* placeholder: search already re-rendered */ }
 function doSearch(){ appraise(productVal); }
 
 renderHome();
