@@ -120,6 +120,7 @@ body{font-family:var(--sans);font-weight:300;color:var(--ink);min-height:100vh;-
 .hair.tight{margin:14px 0}
 .identity{text-align:center}
 .prod-img{display:block;width:120px;height:120px;margin:2px auto 14px;object-fit:contain;background:#fff;border:1px solid var(--hair);border-radius:5px;padding:10px}
+.prod-ph{display:flex;align-items:center;justify-content:center;width:120px;height:120px;margin:2px auto 14px;background:var(--card2);border:1px solid var(--hair);border-radius:5px;font-family:var(--sans);font-weight:600;font-size:46px;color:#8ba6b8}
 .pname{font-family:var(--serif);font-weight:600;font-size:29px;line-height:1.14;margin:2px 0 6px;color:var(--ink)}
 .pcat{font-family:var(--sans);font-weight:500;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--stone)}
 
@@ -166,7 +167,7 @@ body{font-family:var(--sans);font-weight:300;color:var(--ink);min-height:100vh;-
 /* ---- Veya ---- */
 
 /* Paste your Stripe Payment Link between the quotes to take real £10/mo payments. */
-var MEMBERSHIP_LINK = "https://buy.stripe.com/test_28EdR8eN9coacyr0to5kk00";
+var MEMBERSHIP_LINK = "";
 
 var DB = [
   { keys:["nurofen","ibuprofen"], product:"Nurofen", category:"Painkiller \u00b7 Ibuprofen",
@@ -411,8 +412,23 @@ function appraiseScanned(query, displayName, image){
     if(!r.alternatives||!r.alternatives.length){ scanMessage("Couldn\u2019t appraise",(r.summary||"Veya couldn\u2019t weigh this one up. Try another item.")); return; }
     r.source="live \u00b7 ai"; if(image) r.image=image;
     renderResult(r,"scan");
+    if(!r.image) ensureImage(displayName||query);
   }).catch(function(){ scanMessage("Veya is busy","The value engine is under heavy load right now. Give it a moment and scan again."); });
 }
+
+/* ---- Product images (always show something) ---- */
+function placeholderHTML(name){ var c=((name||"?").trim().charAt(0)||"?").toUpperCase(); return '<div class="prod-ph">'+esc(c)+'</div>'; }
+function imgTag(url,name){ return '<img class="prod-img" src="'+esc(url)+'" data-name="'+esc(name||"")+'" alt="" onerror="phFail(this)" />'; }
+function phFail(el){ el.outerHTML=placeholderHTML(el.getAttribute("data-name")); }
+function setProdImage(url,name){ var w=document.getElementById("prodwrap"); if(w) w.innerHTML=imgTag(url,name); }
+function fetchNameImage(name){
+  if(!name) return Promise.resolve("");
+  return fetch("https://world.openfoodfacts.org/cgi/search.pl?search_terms="+encodeURIComponent(name)+"&search_simple=1&action=process&json=1&page_size=1")
+    .then(function(r){ return r.json(); })
+    .then(function(d){ var p=d&&d.products&&d.products[0]; return (p&&(p.image_front_url||p.image_url))||""; })
+    .catch(function(){ return ""; });
+}
+function ensureImage(name){ fetchNameImage(name).then(function(url){ if(url) setProdImage(url,name); }); }
 
 /* ---- Result ---- */
 function renderLoading(){ showLoading("Appraising\u2026"); }
@@ -421,8 +437,9 @@ function renderResult(r, mode){
   var st=stateFor(r.worthScore);
   var html=mastHTML+'<div class="card" style="border-top:3px solid '+st.color+'">'+
     '<div class="card-head"><div class="m">VEYA</div><div class="k">Appraisal</div></div><hr class="hair" />'+
-    '<div class="identity">'+
-      (r.image?'<img class="prod-img" src="'+esc(r.image)+'" alt="" onerror="this.style.display=\'none\'" />':'')+
+    '<div class="identity"><div id="prodwrap">'+
+      (r.image?imgTag(r.image,r.product):placeholderHTML(r.product))+
+    '</div>'+
       '<div class="pname">'+esc(r.product)+'</div>'+(r.category?'<div class="pcat">'+esc(r.category)+'</div>':'')+
     '</div>'+
     '<hr class="hair" />'+
@@ -470,6 +487,7 @@ function appraise(name){
     if(payPrice) r.userPrice="\u00a3"+payPrice;
     r.source="live \u00b7 ai";
     renderResult(r,"name");
+    if(!r.image) ensureImage(r.product||q);
   }).catch(function(){
     var local=lookupLocal(q);
     if(local){ var d={};for(var k in local)d[k]=local[k]; if(payPrice)d.userPrice="\u00a3"+payPrice; d.source="offline example"; renderResult(d,"name"); }
