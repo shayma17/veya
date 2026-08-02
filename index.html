@@ -166,7 +166,7 @@ body{font-family:var(--sans);font-weight:300;color:var(--ink);min-height:100vh;-
 /* ---- Veya ---- */
 
 /* Paste your Stripe Payment Link between the quotes to take real £10/mo payments. */
-var MEMBERSHIP_LINK = "";
+var MEMBERSHIP_LINK = "https://buy.stripe.com/test_28EdR8eN9coacyr0to5kk00";
 
 var DB = [
   { keys:["nurofen","ibuprofen"], product:"Nurofen", category:"Painkiller \u00b7 Ibuprofen",
@@ -243,7 +243,7 @@ function renderHome(note){
     '<button class="snap-btn" onclick="triggerPhoto()">Snap or upload a photo</button>'+
     '<div class="snap-hint">No barcode? Photograph the product or pick one from your library.</div>'+
     (note?'<div class="note">'+esc(note)+'</div>':'')+
-    '<div class="valueline">Know if it\u2019s worth it before you buy.</div>'+
+    '<div class="valueline">Know if it\u2019s worth it \u2014<br>before you buy.</div>'+
     '<div class="socials-label">Come say hi</div>'+
     '<div class="socials">'+
       '<a class="social" href="https://www.tiktok.com/@useveya" target="_blank" rel="noopener"><span class="slogo">'+tiktokSVG+'</span><span class="shandle">@useveya</span></a>'+
@@ -260,7 +260,7 @@ function renderMembership(msg){
   app.innerHTML=mastHTML+
     '<div class="member">'+
       '<div class="member-badge">Veya Membership</div>'+
-      '<div class="member-price"><b>\u00a310</b><span> / month</span></div>'+
+      '<div class="member-price"><b>\u00a310</b><span> / year</span></div>'+
       '<div class="member-tag">Search anything. Anywhere. Instantly.</div>'+
       '<div class="perks">'+perksHTML+'</div>'+
       '<button class="appraise" onclick="joinMember()">Become a member</button>'+
